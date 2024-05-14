@@ -6,6 +6,8 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/websocket/v2"
+
 	"github.com/joho/godotenv"
 )
 
@@ -33,6 +35,8 @@ func main() {
 	go setupDMClients()
 
 	setupRoutes(app)
+
+	app.Use("/ws", websocket.New(handleWebsocketConnection))
 
 	err = app.Listen(":" + envPort)
 	if err != nil {
