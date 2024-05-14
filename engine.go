@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -37,6 +38,15 @@ func main() {
 	setupRoutes(app)
 
 	app.Use("/ws", websocket.New(handleWebsocketConnection))
+
+	go func() {
+		ticker := time.NewTicker(1 * time.Second)
+		defer ticker.Stop()
+
+		for range ticker.C {
+			sendClientsInfo()
+		}
+	}()
 
 	err = app.Listen(":" + envPort)
 	if err != nil {
