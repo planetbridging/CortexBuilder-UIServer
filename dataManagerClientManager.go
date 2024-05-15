@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/fasthttp/websocket"
+	"github.com/google/uuid"
 )
 
 type WSMessage struct {
@@ -18,17 +19,17 @@ type WSMessage struct {
 }
 
 // Define a global variable to hold the WebSocket clients.
-var clientsDM []*websocket.Conn
+var clientsDM map[string]*websocket.Conn
 var lockDM sync.Mutex
 var serversDM []string
 
 func setupDMClients() {
 	serversDM = strings.Split(os.Getenv("DM_WEBSOCKET_SERVERS"), ",")
+	clientsDM = make(map[string]*websocket.Conn)
 
 	for _, server := range serversDM {
 		go func(server string) {
 			var c *websocket.Conn
-
 			for {
 				u, err := url.Parse(server)
 				if err != nil {
@@ -43,12 +44,19 @@ func setupDMClients() {
 					continue
 				} else {
 					log.Println("connected to", u.String())
+					//broadcastMessage("mount", "./host/data.csv")
 				}
 
-				// Add the client to the global clients slice.
+				// Generate a unique UUID for the client
+				clientUUID := uuid.New().String()
+
+				// Add the client to the global clients map.
 				lockDM.Lock()
-				clientsDM = append(clientsDM, c)
+				clientsDM[clientUUID] = c
 				lockDM.Unlock()
+
+				//run stuff here if you want on connection from server to server once
+				//broadcastMessage("sysinfo", "")
 
 				// Your code to interact with the WebSocket server goes here.
 				// For example, to read messages from the server:
@@ -59,19 +67,41 @@ func setupDMClients() {
 						break
 					}
 					log.Printf("received: %s", message)
+					//sendAllRelay(string(message))
+
+					// Convert the message to a JSON object
+					var jsonObject map[string]interface{}
+					err = json.Unmarshal(message, &jsonObject)
+					if err != nil {
+						log.Println("json unmarshal:", err)
+						break
+					}
+
+					ip := u.Hostname()
+					port := u.Port()
+
+					// Add a new key-value pair
+					jsonObject["pcType"] = "dataCache"
+					jsonObject["ip"] = ip
+					jsonObject["port"] = port
+					jsonObject["id"] = clientUUID
+
+					// Convert the JSON object back to a string
+					jsonString, err := json.Marshal(jsonObject)
+					if err != nil {
+						log.Println("json marshal:", err)
+						break
+					}
+
+					sendAllRelay(string(jsonString))
 				}
 
 				c.Close()
 				log.Println("disconnected from", u.String())
 
-				// Remove the client from the global clients slice.
+				// Remove the client from the global clients map.
 				lockDM.Lock()
-				for i, client := range clientsDM {
-					if client == c {
-						clientsDM = append(clientsDM[:i], clientsDM[i+1:]...)
-						break
-					}
-				}
+				delete(clientsDM, clientUUID)
 				lockDM.Unlock()
 
 				time.Sleep(1 * time.Second) // Wait for 1 second before trying to reconnect
@@ -83,28 +113,46 @@ func setupDMClients() {
 	select {}
 }
 
+func sendMessageToClient(clientUUID string, message string) {
+    lockDM.Lock()
+    defer lockDM.Unlock()
+
+    client, ok := clientsDM[clientUUID]
+    if !ok {
+        log.Println("Client with UUID", clientUUID, "not found")
+        return
+    }
+
+    if err := client.WriteMessage(websocket.TextMessage, []byte(message)); err != nil {
+        log.Println("write:", err)
+    }
+}
+
+
 func getClientsInfo() string {
-	lockDM.Lock()
-	defer lockDM.Unlock()
+    lockDM.Lock()
+    defer lockDM.Unlock()
 
-	type ClientInfo struct {
-		RemoteAddr string `json:"remote_addr"`
-	}
+    type ClientInfo struct {
+        UUID       string `json:"uuid"`
+        RemoteAddr string `json:"remote_addr"`
+    }
 
-	clientsInfo := make([]ClientInfo, len(clientsDM))
-	for i, client := range clientsDM {
-		clientsInfo[i] = ClientInfo{
-			RemoteAddr: client.RemoteAddr().String(),
-		}
-	}
+    clientsInfo := make([]ClientInfo, 0, len(clientsDM))
+    for uuid, client := range clientsDM {
+        clientsInfo = append(clientsInfo, ClientInfo{
+            UUID:       uuid,
+            RemoteAddr: client.RemoteAddr().String(),
+        })
+    }
 
-	jsonData, err := json.Marshal(clientsInfo)
-	if err != nil {
-		log.Println("json marshal:", err)
-		return ""
-	}
+    jsonData, err := json.Marshal(clientsInfo)
+    if err != nil {
+        log.Println("json marshal:", err)
+        return ""
+    }
 
-	return string(jsonData)
+    return string(jsonData)
 }
 
 func broadcastMessage(action string, path string) {
@@ -120,10 +168,11 @@ func broadcastMessage(action string, path string) {
 	}
 
 	lockDM.Lock()
+	defer lockDM.Unlock()
+
 	for _, c := range clientsDM {
 		if err := c.WriteMessage(websocket.TextMessage, jsonData); err != nil {
 			log.Println("write:", err)
 		}
 	}
-	lockDM.Unlock()
 }

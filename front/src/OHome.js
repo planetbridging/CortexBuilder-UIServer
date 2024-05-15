@@ -3,7 +3,7 @@ import React from "react";
 class OHome extends React.Component {
   state = {
     ws: null,
-    lstDataCache: [],
+    lstPods: [],
   };
 
   componentDidMount() {
@@ -33,25 +33,38 @@ class OHome extends React.Component {
     };
     ws.onmessage = (evt) => {
       const message = JSON.parse(evt.data);
+      //console.log(message);
       switch (message.Type) {
         case "pong":
           console.log("received pong");
           break;
         case "getClients":
-          console.log(message);
+          //console.log(message);
           // Parse new client data
-          const lstDataCache = JSON.parse(message.lstDataCache);
+          const lstPods = JSON.parse(message.lstDataCache);
           // Compare with current state
           if (
-            JSON.stringify(this.state.lstDataCache) !==
-            JSON.stringify(lstDataCache)
+            JSON.stringify(this.state.lstPods) !==
+            JSON.stringify(lstPods)
           ) {
             // Update clients state if data has changed
-            this.setState({ lstDataCache: lstDataCache });
+            this.setState({ lstPods: lstPods });
           }
           break;
         default:
           console.log("unknown message type:", message.Type);
+          console.log(message);
+          try{
+            var j = message;
+            const keys = Object.keys(j);
+            if(keys.includes("id")){
+              console.log(this.state.lstPods);
+            }
+            console.log(keys);
+          }catch(ex){
+            console.log(ex);
+          }
+          
       }
     };
 
@@ -70,7 +83,7 @@ class OHome extends React.Component {
       <div>
         <p>helo</p>
         {/* Display client details */}
-        {this.state.lstDataCache.map((client, index) => (
+        {this.state.lstPods.map((client, index) => (
           <div key={index}>
             <p>{client.remote_addr}</p>
           </div>

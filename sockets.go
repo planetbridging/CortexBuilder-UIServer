@@ -61,6 +61,7 @@ func handleWebsocketConnection(c *websocket.Conn) {
 				log.Println("write:", err)
 				break
 			}
+			broadcastMessage("sysinfo", "")
 		default:
 			log.Println("unknown message type:", msg.Type)
 		}
@@ -94,6 +95,31 @@ func sendClientsInfo() {
 	}
 	clientsMu.Unlock()
 }
+
+func sendAllRelay(jsonString string) {
+	var response map[string]interface{}
+	err := json.Unmarshal([]byte(jsonString), &response)
+	if err != nil {
+		log.Println("json unmarshal:", err)
+		return
+	}
+
+	jsonData, err := json.Marshal(response)
+	if err != nil {
+		log.Println("json marshal:", err)
+		return
+	}
+
+	clientsMu.Lock()
+	for client := range clients {
+		err = client.WriteMessage(websocket.TextMessage, jsonData)
+		if err != nil {
+			log.Println("write:", err)
+		}
+	}
+	clientsMu.Unlock()
+}
+
 
 func sendClientsInfoManually(c *websocket.Conn) {
 	clientsInfo := getClientsInfo()
