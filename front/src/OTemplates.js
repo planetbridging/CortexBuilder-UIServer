@@ -14,10 +14,12 @@ import {
   DrawerCloseButton,
   Button,
   HStack,
+  Icon,
 } from "@chakra-ui/react";
 
 import { FaDatabase } from "react-icons/fa6";
 import { FaFolder } from "react-icons/fa";
+import { FiFolder, FiFileText } from "react-icons/fi";
 
 export class OSystemInfo extends React.Component {
   render() {
@@ -84,6 +86,52 @@ export class OFunction extends React.Component {
 
   render() {
     return this.showBtnsDataCache();
+  }
+}
+
+// Define a class for the file system item
+class FileSystemItem {
+  constructor(name, icon) {
+    this.name = name;
+    this.icon = icon;
+  }
+}
+
+// Define a class for the file manager
+export class OFileManager extends React.Component {
+  constructor(props) {
+    super(props);
+    // Initialize state with a path and file system items
+    this.state = {
+      path: "Home > Documents",
+      items: [
+        new FileSystemItem("Folder 1", FiFolder),
+        new FileSystemItem("File 1.txt", FiFileText),
+        // ... add more items
+      ],
+    };
+  }
+
+  render() {
+    const { path, items } = this.state;
+    return (
+      <Box p={5} borderWidth="1px" borderRadius="lg">
+        {/* Path */}
+        <Text mb={4} fontSize="lg" fontWeight="bold">
+          {path}
+        </Text>
+
+        {/* File System Items */}
+        <Flex direction="column" gap={2}>
+          {items.map((item, index) => (
+            <Flex key={index} align="center" p={2} _hover={{ bg: "gray.100" }}>
+              <Icon as={item.icon} w={6} h={6} mr={2} />
+              <Text>{item.name}</Text>
+            </Flex>
+          ))}
+        </Flex>
+      </Box>
+    );
   }
 }
 

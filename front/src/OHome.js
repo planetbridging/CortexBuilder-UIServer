@@ -15,7 +15,7 @@ import {
 } from "@chakra-ui/react";
 import React from "react";
 import { FaComputer } from "react-icons/fa6";
-import { ODrawer, OFunction, OShowType, OSystemInfo } from "./OTemplates";
+import { ODrawer, OFileManager, OFunction, OShowType, OSystemInfo } from "./OTemplates";
 
 import logo from "./imgs/logo.jpg";
 import bg from "./imgs/bg.jpg";
@@ -156,7 +156,7 @@ class OHome extends React.Component {
                     </Heading>
                   </CardHeader>
 
-                  <CardBody></CardBody>
+                  <CardBody><OFileManager/></CardBody>
                   <CardFooter>
                     <OFunction
                       pcType={podSpec.pcType}
