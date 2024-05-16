@@ -28,6 +28,7 @@ export class OSystemInfo extends React.Component {
       <Box>
         <Flex justifyContent="space-between" mb={4}>
           <Stack>
+            <Text>ID: {id}</Text>
             <Text>Architecture: {arch}</Text>
             <Text>Cache Path: {cachePath}</Text>
             <Text>IP: {ip}</Text>

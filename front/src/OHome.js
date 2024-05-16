@@ -115,6 +115,7 @@ class OHome extends React.Component {
                 os: "",
                 pcType: "",
                 port: "",
+                id: client.uuid,
               };
             }
             return (
@@ -135,8 +136,10 @@ class OHome extends React.Component {
                         </Text>
                         {podSpec && (
                           <ODrawer
+                            header={"System info"}
                             content={
                               <OSystemInfo
+                                id={client.uuid}
                                 arch={podSpec.arch}
                                 cachePath={podSpec.cachePath}
                                 ip={podSpec.ip}
