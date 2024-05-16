@@ -1,10 +1,30 @@
+import {
+  Heading,
+  Wrap,
+  WrapItem,
+  Card,
+  CardHeader,
+  CardBody,
+  CardFooter,
+  VStack,
+  Text,
+  HStack,
+  Box,
+  Button,
+  Image,
+} from "@chakra-ui/react";
 import React from "react";
+import { FaComputer } from "react-icons/fa6";
+import { ODrawer, OFunction, OShowType, OSystemInfo } from "./OTemplates";
+
+import logo from "./imgs/logo.jpg";
+import bg from "./imgs/bg.jpg";
 
 class OHome extends React.Component {
   state = {
     ws: null,
     lstDataPods: [],
-    lstPodSpecs: new Map()
+    lstPodSpecs: new Map(),
   };
 
   componentDidMount() {
@@ -28,14 +48,14 @@ class OHome extends React.Component {
         case "getClients":
           // Parse new client data
           const lstDataPods = JSON.parse(message.lstDataCache);
- 
+
           // Compare with current state
           this.setState({ lstDataPods: lstDataPods });
-          break;          
+          break;
         default:
           console.log("unknown message type:", message.Type);
-          console.log(message);  
-          this.mainMsgs(message);        
+          console.log(message);
+          this.mainMsgs(message);
       }
     };
 
@@ -45,52 +65,108 @@ class OHome extends React.Component {
     this.setState({ ws: ws });
   }
 
-
-  mainMsgs(msg){
-    switch(msg.cmd){
+  mainMsgs(msg) {
+    switch (msg.cmd) {
       case "sysinfo":
         console.log(msg);
         var lstMpTmp = this.state.lstPodSpecs;
-        if(!lstMpTmp.has(msg.id)){
+        if (!lstMpTmp.has(msg.id)) {
           const tmpId = msg.id;
           delete msg.id;
-          lstMpTmp.set(tmpId,msg);
-          this.setState({lstPodSpecs: lstMpTmp});
+          lstMpTmp.set(tmpId, msg);
+          this.setState({ lstPodSpecs: lstMpTmp });
         }
-      break;
+        break;
     }
   }
 
+  shortenUUID(uuid) {
+    if (uuid.includes("-")) {
+      var s = uuid.split("-")[0];
+      return s;
+    }
+    return uuid;
+  }
 
   render() {
-    console.log(this.state.lstDataPods);
-    console.log(this.state.lstPodSpecs);
     return (
-      <div>
-        <p>helo</p>
-        {/* Display client details */}
-        {this.state.lstDataPods.map((client, index) => {
-          const podSpec = this.state.lstPodSpecs.get(client.uuid);
-          return (
-            <div key={index}>
-              <p>{client.remote_addr}</p>
-              <p>{client.uuid}</p>
-              {podSpec && (
-                <div>
-                  <p>Arch: {podSpec.arch}</p>
-                  <p>Cache Path: {podSpec.cachePath}</p>
-                  <p>Command: {podSpec.cmd}</p>
-                  <p>IP: {podSpec.ip}</p>
-                  <p>Number of CPUs: {podSpec.numCPU}</p>
-                  <p>OS: {podSpec.os}</p>
-                  <p>PC Type: {podSpec.pcType}</p>
-                  <p>Port: {podSpec.port}</p>
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
+      <Box
+        h="100vh"
+        w="100vw"
+        style={{ backgroundImage: `url(${bg})`, backgroundSize: "cover" }}
+      >
+        <Box w="100vw">
+          <Button
+            style={{ backgroundImage: `url(${logo})`, backgroundSize: "cover" }}
+          >
+            <Text color="white">Cortex Builder</Text>
+          </Button>
+        </Box>
+        <Wrap>
+          {this.state.lstDataPods.map((client, index) => {
+            const podSpec = this.state.lstPodSpecs.get(client.uuid);
+            if (!podSpec) {
+              podSpec = {
+                arch: "",
+                cachePath: "",
+                cmd: "",
+                ip: "",
+                numCPU: "",
+                os: "",
+                pcType: "",
+                port: "",
+              };
+            }
+            return (
+              <WrapItem key={index}>
+                <Card
+                  style={{
+                    backgroundColor: "rgba(255, 255, 255, 0.1)",
+                    backdropFilter: "blur(10px)",
+                    boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.2)",
+                  }}
+                >
+                  <CardHeader>
+                    <Heading size="md">
+                      <HStack>
+                        <OShowType pcType={podSpec.pcType} />
+                        <Text color="white">
+                          {this.shortenUUID(client.uuid)}
+                        </Text>
+                        {podSpec && (
+                          <ODrawer
+                            content={
+                              <OSystemInfo
+                                arch={podSpec.arch}
+                                cachePath={podSpec.cachePath}
+                                ip={podSpec.ip}
+                                numCPU={podSpec.numCPU}
+                                os={podSpec.os}
+                                port={podSpec.port}
+                              />
+                            }
+                            btnOpenText={<FaComputer />}
+                            btnSize={"sm"}
+                          />
+                        )}
+                      </HStack>
+                    </Heading>
+                  </CardHeader>
+
+                  <CardBody></CardBody>
+                  <CardFooter>
+                    <OFunction
+                      pcType={podSpec.pcType}
+                      uuid={client.uuid}
+                      cachePath={podSpec.cachePath}
+                    />
+                  </CardFooter>
+                </Card>
+              </WrapItem>
+            );
+          })}
+        </Wrap>
+      </Box>
     );
   }
 }
