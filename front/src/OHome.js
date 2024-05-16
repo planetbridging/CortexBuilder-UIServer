@@ -3,7 +3,8 @@ import React from "react";
 class OHome extends React.Component {
   state = {
     ws: null,
-    lstPods: [],
+    lstDataPods: [],
+    lstPodSpecs: new Map()
   };
 
   componentDidMount() {
@@ -16,20 +17,6 @@ class OHome extends React.Component {
         data: "",
       };
       ws.send(JSON.stringify(message));
-
-      /* const msg2 = {
-        type: "getClients",
-        data: "",
-      };
-      ws.send(JSON.stringify(msg2));*/
-      // Send getClients message every second
-      /*this.interval = setInterval(() => {
-        const msg2 = {
-          type: "getClients",
-          data: "",
-        };
-        ws.send(JSON.stringify(msg2));
-      }, 1000);*/
     };
     ws.onmessage = (evt) => {
       const message = JSON.parse(evt.data);
@@ -39,32 +26,16 @@ class OHome extends React.Component {
           console.log("received pong");
           break;
         case "getClients":
-          //console.log(message);
           // Parse new client data
-          const lstPods = JSON.parse(message.lstDataCache);
+          const lstDataPods = JSON.parse(message.lstDataCache);
+ 
           // Compare with current state
-          if (
-            JSON.stringify(this.state.lstPods) !==
-            JSON.stringify(lstPods)
-          ) {
-            // Update clients state if data has changed
-            this.setState({ lstPods: lstPods });
-          }
-          break;
+          this.setState({ lstDataPods: lstDataPods });
+          break;          
         default:
           console.log("unknown message type:", message.Type);
-          console.log(message);
-          try{
-            var j = message;
-            const keys = Object.keys(j);
-            if(keys.includes("id")){
-              console.log(this.state.lstPods);
-            }
-            console.log(keys);
-          }catch(ex){
-            console.log(ex);
-          }
-          
+          console.log(message);  
+          this.mainMsgs(message);        
       }
     };
 
@@ -74,20 +45,51 @@ class OHome extends React.Component {
     this.setState({ ws: ws });
   }
 
-  componentWillUnmount() {
-    clearInterval(this.interval);
+
+  mainMsgs(msg){
+    switch(msg.cmd){
+      case "sysinfo":
+        console.log(msg);
+        var lstMpTmp = this.state.lstPodSpecs;
+        if(!lstMpTmp.has(msg.id)){
+          const tmpId = msg.id;
+          delete msg.id;
+          lstMpTmp.set(tmpId,msg);
+          this.setState({lstPodSpecs: lstMpTmp});
+        }
+      break;
+    }
   }
 
+
   render() {
+    console.log(this.state.lstDataPods);
+    console.log(this.state.lstPodSpecs);
     return (
       <div>
         <p>helo</p>
         {/* Display client details */}
-        {this.state.lstPods.map((client, index) => (
-          <div key={index}>
-            <p>{client.remote_addr}</p>
-          </div>
-        ))}
+        {this.state.lstDataPods.map((client, index) => {
+          const podSpec = this.state.lstPodSpecs.get(client.uuid);
+          return (
+            <div key={index}>
+              <p>{client.remote_addr}</p>
+              <p>{client.uuid}</p>
+              {podSpec && (
+                <div>
+                  <p>Arch: {podSpec.arch}</p>
+                  <p>Cache Path: {podSpec.cachePath}</p>
+                  <p>Command: {podSpec.cmd}</p>
+                  <p>IP: {podSpec.ip}</p>
+                  <p>Number of CPUs: {podSpec.numCPU}</p>
+                  <p>OS: {podSpec.os}</p>
+                  <p>PC Type: {podSpec.pcType}</p>
+                  <p>Port: {podSpec.port}</p>
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
     );
   }
