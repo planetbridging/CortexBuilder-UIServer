@@ -32,7 +32,7 @@ class OHome extends React.Component {
   };
 
   componentDidMount() {
-    const ws = new WebSocket(wsUrl);
+    const ws = new WebSocket(wsUrl+"/ws");
     ws.onopen = () => {
       console.log("connected");
 
