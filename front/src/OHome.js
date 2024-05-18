@@ -20,6 +20,10 @@ import { ODrawer, OFileManager, OFunction, OShowType, OSystemInfo } from "./OTem
 import logo from "./imgs/logo.jpg";
 import bg from "./imgs/bg.jpg";
 
+var currentHost = window.location.hostname;
+
+var wsUrl = "ws://"+currentHost+":4124";
+
 class OHome extends React.Component {
   state = {
     ws: null,
@@ -28,7 +32,7 @@ class OHome extends React.Component {
   };
 
   componentDidMount() {
-    const ws = new WebSocket("ws://localhost:4124/ws");
+    const ws = new WebSocket(wsUrl);
     ws.onopen = () => {
       console.log("connected");
 

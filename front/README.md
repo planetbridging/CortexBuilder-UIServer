@@ -1,4 +1,15 @@
+
 # Getting Started with Create React App
+
+# Starting react with forever (for lazy development)
+forever start -c sh ./start-react.sh
+
+# To stop
+forever stop start-react.sh
+
+# Check logs
+forever logs
+
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
