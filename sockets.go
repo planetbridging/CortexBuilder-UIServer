@@ -14,6 +14,24 @@ type Message struct {
 	Data string `json:"data"`
 }
 
+type PathData struct {
+	Path string `json:"path"`
+	UUID string `json:"uuid"`
+}
+
+type File struct {
+	Name string `json:"name"`
+	Size string `json:"size"`
+	Type string `json:"type"`
+}
+
+type ResponseData struct {
+	UUID     string `json:"uuid"`
+	Path     string `json:"path"`
+	Contents []File `json:"contents"`
+	Type     string `json:"type"`
+}
+
 var (
 	clients   = make(map[*websocket.Conn]bool) // stores all active clients
 	clientsMu sync.Mutex                       // ensures that updates to the clients map are thread-safe
@@ -62,6 +80,50 @@ func handleWebsocketConnection(c *websocket.Conn) {
 				break
 			}
 			broadcastMessage("sysinfo", "")
+		case "reqPathFromCache":
+			var data PathData
+			err := json.Unmarshal([]byte(msg.Data), &data)
+			if err != nil {
+				log.Println("json unmarshal data:", err)
+				break
+			}
+			fmt.Println("loading reqPathFromCache")
+			fmt.Println("Path:", data.Path)
+			fmt.Println("UUID:", data.UUID)
+			reqPathData := sendGetRequestToOneRelay(data.UUID, data.Path)
+			fmt.Println(reqPathData)
+
+			// Unmarshal the file list
+			var fileList []File
+			err = json.Unmarshal([]byte(reqPathData), &fileList)
+			if err != nil {
+				log.Println("json unmarshal fileList:", err)
+				break
+			}
+
+			// Create a ResponseData object
+			responseData := ResponseData{
+				UUID:     data.UUID,
+				Path:     data.Path,
+				Contents: fileList,
+				Type:     "reqPathFromCache",
+			}
+
+			// Marshal the ResponseData object into JSON
+			jsonData, err := json.Marshal(responseData)
+			if err != nil {
+				log.Println("json marshal:", err)
+				break
+			}
+
+			// Send the JSON data back to the client
+			err = c.WriteMessage(messageType, jsonData)
+			if err != nil {
+				log.Println("write:", err)
+				break
+			}
+			break
+
 		default:
 			log.Println("unknown message type:", msg.Type)
 		}
@@ -119,7 +181,6 @@ func sendAllRelay(jsonString string) {
 	}
 	clientsMu.Unlock()
 }
-
 
 func sendClientsInfoManually(c *websocket.Conn) {
 	clientsInfo := getClientsInfo()

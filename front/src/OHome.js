@@ -15,14 +15,20 @@ import {
 } from "@chakra-ui/react";
 import React from "react";
 import { FaComputer } from "react-icons/fa6";
-import { ODrawer, OFileManager, OFunction, OShowType, OSystemInfo } from "./OTemplates";
+import {
+  ODrawer,
+  OFileManager,
+  OFunction,
+  OShowType,
+  OSystemInfo,
+} from "./OTemplates";
 
 import logo from "./imgs/logo.jpg";
 import bg from "./imgs/bg.jpg";
 
 var currentHost = window.location.hostname;
 
-var wsUrl = "ws://"+currentHost+":4124";
+var wsUrl = "ws://" + currentHost + ":4124";
 
 class OHome extends React.Component {
   state = {
@@ -32,7 +38,7 @@ class OHome extends React.Component {
   };
 
   componentDidMount() {
-    const ws = new WebSocket(wsUrl+"/ws");
+    const ws = new WebSocket(wsUrl + "/ws");
     ws.onopen = () => {
       console.log("connected");
 
@@ -93,6 +99,7 @@ class OHome extends React.Component {
   }
 
   render() {
+    const { ws } = this.state;
     return (
       <Box
         h="100vh"
@@ -160,13 +167,23 @@ class OHome extends React.Component {
                     </Heading>
                   </CardHeader>
 
-                  <CardBody><OFileManager/></CardBody>
+                  <CardBody></CardBody>
                   <CardFooter>
-                    <OFunction
-                      pcType={podSpec.pcType}
-                      uuid={client.uuid}
-                      cachePath={podSpec.cachePath}
-                    />
+                    <HStack>
+                      <ODrawer
+                        header={"System info"}
+                        content={<OFileManager ws={ws} uuid={client.uuid} />}
+                        btnOpenText={
+                          <OFunction
+                            pcType={podSpec.pcType}
+                            uuid={client.uuid}
+                            cachePath={podSpec.cachePath}
+                          />
+                        }
+                        btnSize={"sm"}
+                        placement={"top"}
+                      />
+                    </HStack>
                   </CardFooter>
                 </Card>
               </WrapItem>

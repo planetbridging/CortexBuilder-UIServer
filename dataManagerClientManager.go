@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/url"
 	"os"
@@ -92,8 +93,11 @@ func setupDMClients() {
 						log.Println("json marshal:", err)
 						break
 					}
-
+					//fmt.Println(string(jsonString))
 					sendAllRelay(string(jsonString))
+					/*fmt.Println(ip, port)
+					geDataCacheRoot, _ := sendGetRequest("http://" + ip + ":" + port + "/path")
+					fmt.Println(geDataCacheRoot)*/
 				}
 
 				c.Close()
@@ -113,46 +117,63 @@ func setupDMClients() {
 	select {}
 }
 
-func sendMessageToClient(clientUUID string, message string) {
-    lockDM.Lock()
-    defer lockDM.Unlock()
+func sendGetRequestToOneRelay(clientUUID string, message string) string {
+	lockDM.Lock()
+	defer lockDM.Unlock()
 
-    client, ok := clientsDM[clientUUID]
-    if !ok {
-        log.Println("Client with UUID", clientUUID, "not found")
-        return
-    }
+	client, ok := clientsDM[clientUUID]
+	if !ok {
+		log.Println("Client with UUID", clientUUID, "not found")
+		return ""
+	}
 
-    if err := client.WriteMessage(websocket.TextMessage, []byte(message)); err != nil {
-        log.Println("write:", err)
-    }
+	fmt.Println("Client address:", client.RemoteAddr())
+	sendGetReq, _ := sendGetRequest("http://" + client.RemoteAddr().String() + message)
+	return sendGetReq
+	/*if err := client.WriteMessage(websocket.TextMessage, []byte(message)); err != nil {
+		log.Println("write:", err)
+	}*/
 }
 
+func sendMessageToClient(clientUUID string, message string) {
+	lockDM.Lock()
+	defer lockDM.Unlock()
+
+	client, ok := clientsDM[clientUUID]
+	if !ok {
+		log.Println("Client with UUID", clientUUID, "not found")
+		return
+	}
+
+	if err := client.WriteMessage(websocket.TextMessage, []byte(message)); err != nil {
+		log.Println("write:", err)
+	}
+}
 
 func getClientsInfo() string {
-    lockDM.Lock()
-    defer lockDM.Unlock()
+	lockDM.Lock()
+	defer lockDM.Unlock()
 
-    type ClientInfo struct {
-        UUID       string `json:"uuid"`
-        RemoteAddr string `json:"remote_addr"`
-    }
+	type ClientInfo struct {
+		UUID       string `json:"uuid"`
+		RemoteAddr string `json:"remote_addr"`
+	}
 
-    clientsInfo := make([]ClientInfo, 0, len(clientsDM))
-    for uuid, client := range clientsDM {
-        clientsInfo = append(clientsInfo, ClientInfo{
-            UUID:       uuid,
-            RemoteAddr: client.RemoteAddr().String(),
-        })
-    }
+	clientsInfo := make([]ClientInfo, 0, len(clientsDM))
+	for uuid, client := range clientsDM {
+		clientsInfo = append(clientsInfo, ClientInfo{
+			UUID:       uuid,
+			RemoteAddr: client.RemoteAddr().String(),
+		})
+	}
 
-    jsonData, err := json.Marshal(clientsInfo)
-    if err != nil {
-        log.Println("json marshal:", err)
-        return ""
-    }
+	jsonData, err := json.Marshal(clientsInfo)
+	if err != nil {
+		log.Println("json marshal:", err)
+		return ""
+	}
 
-    return string(jsonData)
+	return string(jsonData)
 }
 
 func broadcastMessage(action string, path string) {

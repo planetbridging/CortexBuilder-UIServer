@@ -69,13 +69,7 @@ export class OFunction extends React.Component {
   showBtnsDataCache() {
     switch (this.props.pcType) {
       case "dataCache":
-        return (
-          <HStack>
-            <Button>
-              <FaFolder />
-            </Button>
-          </HStack>
-        );
+        return <FaFolder />;
       case undefined:
         return <p>undefined</p>;
       case null:
@@ -110,6 +104,18 @@ export class OFileManager extends React.Component {
         // ... add more items
       ],
     };
+  }
+
+  componentDidMount() {
+    console.log(this.props.uuid);
+    const message = {
+      type: "reqPathFromCache",
+      data: JSON.stringify({
+        path: "/path",
+        uuid: this.props.uuid,
+      }),
+    };
+    this.props.ws.send(JSON.stringify(message));
   }
 
   render() {
@@ -156,7 +162,12 @@ export class ODrawer extends React.Component {
           {this.props.btnOpenText}
         </Button>
 
-        <Drawer isOpen={isOpen} onClose={this.onClose} size={this.props.size}>
+        <Drawer
+          placement={this.props.placement}
+          isOpen={isOpen}
+          onClose={this.onClose}
+          size={this.props.size}
+        >
           <DrawerOverlay />
           <DrawerContent>
             <DrawerCloseButton />
