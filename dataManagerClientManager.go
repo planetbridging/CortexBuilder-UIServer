@@ -150,6 +150,18 @@ func sendMessageToClient(clientUUID string, message string) {
 	}
 }
 
+func getClientRemoteAddr(clientUUID string) string {
+	lockDM.Lock()
+	defer lockDM.Unlock()
+
+	client, ok := clientsDM[clientUUID]
+	if !ok {
+		log.Println("Client with UUID", clientUUID, "not found")
+		return ""
+	}
+	return client.RemoteAddr().String()
+}
+
 func getClientsInfo() string {
 	lockDM.Lock()
 	defer lockDM.Unlock()

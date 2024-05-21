@@ -14,14 +14,24 @@ import {
   DrawerCloseButton,
   Button,
   HStack,
-  Icon, Menu, MenuButton, MenuList, MenuItem
+  Icon,
+  Menu,
+  MenuButton,
+  MenuList,
+  MenuItem,
+  WrapItem,
+  Wrap,
+  ButtonGroup,
+  InputLeftAddon,
+  InputGroup,
+  Input,
+  Spacer,
 } from "@chakra-ui/react";
 
 import { FaDatabase } from "react-icons/fa6";
 import { FaFolder } from "react-icons/fa";
 import { FiFolder, FiFileText } from "react-icons/fi";
 import { ChevronDownIcon } from "@chakra-ui/icons";
-
 
 export class OSystemInfo extends React.Component {
   render() {
@@ -105,6 +115,7 @@ export class OFileManager extends React.Component {
         //new FileSystemItem("File 1.txt", FiFileText),
         // ... add more items
       ],
+      txtFolderName: "",
     };
   }
 
@@ -120,38 +131,94 @@ export class OFileManager extends React.Component {
     this.props.ws.send(JSON.stringify(message));
   }
 
-  
+  txtCreateFolderName = (event) => {
+    this.setState({ txtFolderName: event.target.value });
+  };
+
+  createFolder(){
+    const {txtFolderName}= this.state;
+    const message = {
+      type: "createFolderForCache",
+      data: JSON.stringify({
+        path: this.props.podPath.path +"/" +txtFolderName,
+        uuid: this.props.uuid,
+      }),
+    };
+    if(txtFolderName != ""){
+      this.props.ws.send(JSON.stringify(message));
+    }
+  }
 
   render() {
-    const { path, items } = this.state;
-    console.log(this.props.podPath);
+    const { path, items, txtFolderName } = this.state;
+
     return (
       <Box p={5} borderWidth="1px" borderRadius="lg">
         {/* Path */}
-        <Text mb={4} fontSize="lg" fontWeight="bold">
-          {path}
-        </Text>
+        {this.props.podPath ? (
+          <Box>
+            <HStack>
+              <InputGroup>
+                <InputLeftAddon>Create</InputLeftAddon>
+                <ButtonGroup>
+                  <ODrawer
+                    header={"Create folder"}
+                    content={
+                      <Stack>
+                        <InputGroup>
+                          <InputLeftAddon>Folder name</InputLeftAddon>
+                          <Input
+                            value={txtFolderName}
+                            onChange={this.txtCreateFolderName}
+                            placeholder="Enter text"
+                          />
+                        </InputGroup>
+                        <HStack>
+                          <Spacer />
+                          <Button onClick={()=>this.createFolder()}>Create</Button>
+                        </HStack>
+                      </Stack>
+                    }
+                    btnOpenText={"Folder"}
+                    placement={"top"}
+                  />
+                </ButtonGroup>
+              </InputGroup>
+            </HStack>
+            <Text mb={4} fontSize="lg" fontWeight="bold">
+              {this.props.podPath.path}
+            </Text>
 
-        {/* File System Items */}
-        <Flex direction="column" gap={2}>
-        {this.props.podPath && this.props.podPath.contents.map((item, index) => (
-          <Flex key={index} align="center" p={2} _hover={{ bg: "gray.100" }}>
-           
-            <Menu>
-              <MenuButton as={Button} rightIcon={<ChevronDownIcon />}>
-              <Icon as={item.type === "file" ? FiFileText : FiFolder} w={6} h={6} mr={2} />
-              <Text>{item.name}</Text>
-              <Text>{item.size}</Text>
-              </MenuButton>
-              <MenuList>
-                <MenuItem>Open</MenuItem>
-                <MenuItem>Details</MenuItem>
-              </MenuList>
-            </Menu>
-          </Flex>
-        ))}
-      </Flex>
-
+            {/* File System Items */}
+            <Wrap gap={2}>
+              {this.props.podPath.contents.map((item, index) => (
+                <WrapItem
+                  key={index}
+                  align="center"
+                  p={2}
+                  _hover={{ bg: "blue.100" }}
+                >
+                  <Menu>
+                    <MenuButton as={Button} rightIcon={<ChevronDownIcon />}>
+                      <Icon
+                        as={item.type === "file" ? FiFileText : FiFolder}
+                        w={6}
+                        h={6}
+                        mr={2}
+                      />
+                      <Text>{item.name}</Text>
+                      <Text>{item.size}</Text>
+                    </MenuButton>
+                    <MenuList>
+                      <MenuItem>Open</MenuItem>
+                      <MenuItem>Details</MenuItem>
+                    </MenuList>
+                  </Menu>
+                </WrapItem>
+              ))}
+            </Wrap>
+          </Box>
+        ) : null}
       </Box>
     );
   }

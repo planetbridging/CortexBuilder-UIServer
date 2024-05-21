@@ -32,6 +32,12 @@ type ResponseData struct {
 	Type     string `json:"type"`
 }
 
+type ResponseDataSimple struct {
+	UUID     string `json:"uuid"`
+	Path     string `json:"path"`
+	Type     string `json:"type"`
+}
+
 var (
 	clients   = make(map[*websocket.Conn]bool) // stores all active clients
 	clientsMu sync.Mutex                       // ensures that updates to the clients map are thread-safe
@@ -123,7 +129,17 @@ func handleWebsocketConnection(c *websocket.Conn) {
 				break
 			}
 			break
-
+		case "createFolderForCache":
+			var data ResponseDataSimple
+			err := json.Unmarshal([]byte(msg.Data), &data)
+			if err != nil {
+				log.Println("json unmarshal data:", err)
+				break
+			}
+			fmt.Println(data)
+			foundDataCache := getClientRemoteAddr(data.UUID)
+			fmt.Println(foundDataCache)
+			break
 		default:
 			log.Println("unknown message type:", msg.Type)
 		}
@@ -132,7 +148,7 @@ func handleWebsocketConnection(c *websocket.Conn) {
 
 func sendClientsInfo() {
 	clientsInfo := getClientsInfo()
-	fmt.Println(clientsInfo)
+	//fmt.Println(clientsInfo)
 
 	response := struct {
 		LstDataCache string `json:"lstDataCache"`

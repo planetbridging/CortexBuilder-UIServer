@@ -139,17 +139,23 @@ class OHome extends React.Component {
           {this.state.lstDataPods.map((client, index) => {
             const podSpec = this.state.lstPodSpecs.get(client.uuid);
             if (!podSpec) {
-              podSpec = {
-                arch: "",
-                cachePath: "",
-                cmd: "",
-                ip: "",
-                numCPU: "",
-                os: "",
-                pcType: "",
-                port: "",
-                id: client.uuid,
-              };
+              try{
+                podSpec = {
+                  arch: "",
+                  cachePath: "",
+                  cmd: "",
+                  ip: "",
+                  numCPU: "",
+                  os: "",
+                  pcType: "",
+                  port: "",
+                  id: client.uuid,
+                };
+              }catch{}
+            }
+            console.log(podSpec);
+            if(podSpec == undefined || podSpec == null){
+              return 
             }
             return (
               <WrapItem key={index}>
