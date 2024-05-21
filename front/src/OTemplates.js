@@ -14,12 +14,14 @@ import {
   DrawerCloseButton,
   Button,
   HStack,
-  Icon,
+  Icon, Menu, MenuButton, MenuList, MenuItem
 } from "@chakra-ui/react";
 
 import { FaDatabase } from "react-icons/fa6";
 import { FaFolder } from "react-icons/fa";
 import { FiFolder, FiFileText } from "react-icons/fi";
+import { ChevronDownIcon } from "@chakra-ui/icons";
+
 
 export class OSystemInfo extends React.Component {
   render() {
@@ -99,8 +101,8 @@ export class OFileManager extends React.Component {
     this.state = {
       path: "Home > Documents",
       items: [
-        new FileSystemItem("Folder 1", FiFolder),
-        new FileSystemItem("File 1.txt", FiFileText),
+        //new FileSystemItem("Folder 1", FiFolder),
+        //new FileSystemItem("File 1.txt", FiFileText),
         // ... add more items
       ],
     };
@@ -118,8 +120,11 @@ export class OFileManager extends React.Component {
     this.props.ws.send(JSON.stringify(message));
   }
 
+  
+
   render() {
     const { path, items } = this.state;
+    console.log(this.props.podPath);
     return (
       <Box p={5} borderWidth="1px" borderRadius="lg">
         {/* Path */}
@@ -129,13 +134,24 @@ export class OFileManager extends React.Component {
 
         {/* File System Items */}
         <Flex direction="column" gap={2}>
-          {items.map((item, index) => (
-            <Flex key={index} align="center" p={2} _hover={{ bg: "gray.100" }}>
-              <Icon as={item.icon} w={6} h={6} mr={2} />
+        {this.props.podPath && this.props.podPath.contents.map((item, index) => (
+          <Flex key={index} align="center" p={2} _hover={{ bg: "gray.100" }}>
+           
+            <Menu>
+              <MenuButton as={Button} rightIcon={<ChevronDownIcon />}>
+              <Icon as={item.type === "file" ? FiFileText : FiFolder} w={6} h={6} mr={2} />
               <Text>{item.name}</Text>
-            </Flex>
-          ))}
-        </Flex>
+              <Text>{item.size}</Text>
+              </MenuButton>
+              <MenuList>
+                <MenuItem>Open</MenuItem>
+                <MenuItem>Details</MenuItem>
+              </MenuList>
+            </Menu>
+          </Flex>
+        ))}
+      </Flex>
+
       </Box>
     );
   }

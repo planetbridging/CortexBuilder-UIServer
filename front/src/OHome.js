@@ -35,6 +35,7 @@ class OHome extends React.Component {
     ws: null,
     lstDataPods: [],
     lstPodSpecs: new Map(),
+    lstPodPath: new Map(),
   };
 
   componentDidMount() {
@@ -58,7 +59,6 @@ class OHome extends React.Component {
         case "getClients":
           // Parse new client data
           const lstDataPods = JSON.parse(message.lstDataCache);
-
           // Compare with current state
           this.setState({ lstDataPods: lstDataPods });
           break;
@@ -76,6 +76,7 @@ class OHome extends React.Component {
   }
 
   mainMsgs(msg) {
+  
     switch (msg.cmd) {
       case "sysinfo":
         console.log(msg);
@@ -84,10 +85,31 @@ class OHome extends React.Component {
           const tmpId = msg.id;
           delete msg.id;
           lstMpTmp.set(tmpId, msg);
-          this.setState({ lstPodSpecs: lstMpTmp });
+          var lstPodPathTmp = this.state.lstPodPath;
+          lstPodPathTmp.set(tmpId,null);
+          this.setState({ lstPodSpecs: lstMpTmp,lstPodPath: lstPodPathTmp });
         }
         break;
     }
+
+   
+
+  
+   
+      switch(msg.type){
+        case "reqPathFromCache":
+          if(this.state.lstPodPath.has(msg.uuid)){
+            var lstPodPathTmp = this.state.lstPodPath;
+            const tmpId = msg.uuid;
+            delete msg.uuid;
+            lstPodPathTmp.set(tmpId,msg);
+            this.setState({ lstPodPath: lstPodPathTmp });
+          }
+        break;
+      }
+    
+
+    console.log(msg);
   }
 
   shortenUUID(uuid) {
@@ -99,7 +121,7 @@ class OHome extends React.Component {
   }
 
   render() {
-    const { ws } = this.state;
+    const { ws,lstPodPath } = this.state;
     return (
       <Box
         h="100vh"
@@ -172,7 +194,7 @@ class OHome extends React.Component {
                     <HStack>
                       <ODrawer
                         header={"System info"}
-                        content={<OFileManager ws={ws} uuid={client.uuid} />}
+                        content={<OFileManager ws={ws} uuid={client.uuid} podPath={lstPodPath.get(client.uuid)} />}
                         btnOpenText={
                           <OFunction
                             pcType={podSpec.pcType}
