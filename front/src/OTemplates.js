@@ -31,7 +31,7 @@ import {
 import { FaDatabase } from "react-icons/fa6";
 import { FaFolder } from "react-icons/fa";
 import { FiFolder, FiFileText } from "react-icons/fi";
-import { ChevronDownIcon } from "@chakra-ui/icons";
+import { ChevronDownIcon, RepeatIcon } from "@chakra-ui/icons";
 
 export class OSystemInfo extends React.Component {
   render() {
@@ -109,6 +109,7 @@ export class OFileManager extends React.Component {
     super(props);
     // Initialize state with a path and file system items
     this.state = {
+      reqPath: "",
       path: "Home > Documents",
       items: [
         //new FileSystemItem("Folder 1", FiFolder),
@@ -120,11 +121,15 @@ export class OFileManager extends React.Component {
   }
 
   componentDidMount() {
-    console.log(this.props.uuid);
+    //console.log(this.props.uuid);
+    this.refreshPath("");
+  }
+
+  refreshPath(path) {
     const message = {
       type: "reqPathFromCache",
       data: JSON.stringify({
-        path: "/path",
+        path: "/path" + path,
         uuid: this.props.uuid,
       }),
     };
@@ -135,62 +140,83 @@ export class OFileManager extends React.Component {
     this.setState({ txtFolderName: event.target.value });
   };
 
-  createFolder(){
-    const {txtFolderName}= this.state;
+  createFolder() {
+    const { txtFolderName } = this.state;
     const message = {
       type: "createFolderForCache",
       data: JSON.stringify({
-        path: this.props.podPath.path +"/" +txtFolderName,
+        path: this.props.podPath.path + "/" + txtFolderName,
         uuid: this.props.uuid,
       }),
     };
-    if(txtFolderName != ""){
+    if (txtFolderName != "") {
       this.props.ws.send(JSON.stringify(message));
     }
   }
 
   render() {
     const { path, items, txtFolderName } = this.state;
-
+    var refreshLink = "";
+    if(this.props.podPath){
+      if(this.props.podPath.path){
+        refreshLink = this.props.podPath.path.replace("/path","");
+      }
+    }
+    
     return (
       <Box p={5} borderWidth="1px" borderRadius="lg">
         {/* Path */}
         {this.props.podPath ? (
           <Box>
-            <HStack>
-              <InputGroup>
-                <InputLeftAddon>Create</InputLeftAddon>
-                <ButtonGroup>
-                  <ODrawer
-                    header={"Create folder"}
-                    content={
-                      <Stack>
-                        <InputGroup>
-                          <InputLeftAddon>Folder name</InputLeftAddon>
-                          <Input
-                            value={txtFolderName}
-                            onChange={this.txtCreateFolderName}
-                            placeholder="Enter text"
-                          />
-                        </InputGroup>
-                        <HStack>
-                          <Spacer />
-                          <Button onClick={()=>this.createFolder()}>Create</Button>
-                        </HStack>
-                      </Stack>
-                    }
-                    btnOpenText={"Folder"}
-                    placement={"top"}
+            <InputGroup>
+              <Button onClick={()=>this.refreshPath(refreshLink)}>
+                <RepeatIcon />
+              </Button>
+              <Text mb={4} fontSize="lg" fontWeight="bold">
+                <InputGroup>
+                  <InputLeftAddon>{this.props.podPath.path}</InputLeftAddon>
+                  <Input
+                    value={this.state.reqPath}
+                    onChange={(e) => this.setState({ reqPath: e.target.value })}
+                    placeholder="Enter text"
                   />
-                </ButtonGroup>
-              </InputGroup>
-            </HStack>
-            <Text mb={4} fontSize="lg" fontWeight="bold">
-              {this.props.podPath.path}
-            </Text>
+                </InputGroup>
+              </Text>
+              <Button onClick={()=>this.refreshPath(this.state.reqPath)}>
+                Go
+              </Button>
+              <InputLeftAddon>Create</InputLeftAddon>
+              <ButtonGroup>
+                <ODrawer
+                  header={"Create folder"}
+                  content={
+                    <Stack>
+                      <InputGroup>
+                        <InputLeftAddon>Folder name</InputLeftAddon>
+                        <Input
+                          value={txtFolderName}
+                          onChange={this.txtCreateFolderName}
+                          placeholder="Enter text"
+                        />
+                      </InputGroup>
+                      <HStack>
+                        <Spacer />
+                        <Button onClick={() => this.createFolder()}>
+                          Create
+                        </Button>
+                      </HStack>
+                    </Stack>
+                  }
+                  btnOpenText={"Folder"}
+                  placement={"top"}
+                />
+              </ButtonGroup>
+            </InputGroup>
 
             {/* File System Items */}
             <Wrap gap={2}>
+              {this.props.podPath.contents ? (
+              <>
               {this.props.podPath.contents.map((item, index) => (
                 <WrapItem
                   key={index}
@@ -216,6 +242,9 @@ export class OFileManager extends React.Component {
                   </Menu>
                 </WrapItem>
               ))}
+              </>
+              ) : <p>Folder is empty</p>}
+            
             </Wrap>
           </Box>
         ) : null}

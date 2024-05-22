@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 	"sync"
-
+	"strings"
 	"github.com/gofiber/websocket/v2"
 )
 
@@ -136,9 +136,24 @@ func handleWebsocketConnection(c *websocket.Conn) {
 				log.Println("json unmarshal data:", err)
 				break
 			}
-			fmt.Println(data)
+			
 			foundDataCache := getClientRemoteAddr(data.UUID)
-			fmt.Println(foundDataCache)
+
+			
+			cleanPath := data.Path
+			if strings.HasPrefix(cleanPath, "/path/") {
+				cleanPath = strings.TrimPrefix(cleanPath, "/path/")
+			}
+
+			url := "http://" + foundDataCache + "/createfolder"
+			postData := map[string]interface{}{
+				"Path": "./"+cleanPath, // replace with your actual directory path
+			}
+			response, err := sendPostRequest(url, postData)
+			if err != nil {
+				fmt.Println(err)
+			}
+			fmt.Println(response)
 			break
 		default:
 			log.Println("unknown message type:", msg.Type)

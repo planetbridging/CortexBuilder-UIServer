@@ -153,7 +153,7 @@ class OHome extends React.Component {
                 };
               }catch{}
             }
-            console.log(podSpec);
+            //console.log(podSpec);
             if(podSpec == undefined || podSpec == null){
               return 
             }
