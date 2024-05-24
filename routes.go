@@ -15,6 +15,10 @@ func setupRoutes(app *fiber.App) {
 		return c.SendString("Hello, World!")
 	})
 
+	setupHTTPClients()
+
+    app.Get("/files/:uuid/*", reverseProxyHandler)
+
 }
 
 func sendGetRequest(url string) (string, error) {

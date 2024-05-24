@@ -70,6 +70,43 @@ func handleWebsocketConnection(c *websocket.Conn) {
 		}
 
 		switch msg.Type {
+		case "setCurrentProjectPath":
+			/*type ResponseDataSimple struct {
+	UUID     string `json:"uuid"`
+	Path     string `json:"path"`
+	Type     string `json:"type"`
+}*/
+			var responseData ResponseDataSimple
+			err := json.Unmarshal([]byte(msg.Data), &responseData)
+			if err != nil {
+				log.Println("json unmarshal data:", err)
+				break
+			}
+
+			fmt.Println(responseData.Path, responseData.UUID)
+
+			foundDataCache := getClientRemoteAddr(responseData.UUID)
+
+			// URL of the create file endpoint
+			url := "http://" + foundDataCache + "/createfile"
+
+			// Data to be sent in the POST request
+			postData := map[string]interface{}{
+				"Path": "/config.json", // Ensure this path is allowed by your server logic
+				"Data": "{hello: 'bob'}",
+			}
+
+			// Send POST request
+			response, err := sendPostRequest(url, postData)
+			if err != nil {
+				fmt.Println("Error sending POST request:", err)
+			} else {
+				fmt.Println("Response from server:", response)
+			}
+
+
+			
+
 		case "ping":
 			response := Message{
 				Type: "pong",

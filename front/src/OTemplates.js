@@ -122,14 +122,31 @@ export class OFileManager extends React.Component {
 
   componentDidMount() {
     //console.log(this.props.uuid);
-    this.refreshPath("");
+    this.refreshPath("/path");
   }
+
+  setMainProject(itemName,itemType){
+
+    if(itemType != "file"){
+      const message = {
+        type: "setCurrentProjectPath",
+        data: JSON.stringify({
+          path: this.props.podPath.path + "/" + itemName,
+          uuid: this.props.uuid,
+        }),
+      };
+      this.props.ws.send(JSON.stringify(message));
+    }
+   
+  }
+
+
 
   refreshPath(path) {
     const message = {
       type: "reqPathFromCache",
       data: JSON.stringify({
-        path: "/path" + path,
+        path: path,
         uuid: this.props.uuid,
       }),
     };
@@ -154,6 +171,21 @@ export class OFileManager extends React.Component {
     }
   }
 
+  backBtn(){
+    if(this.props.podPath.path.includes("/")){
+      const segments = this.props.podPath.path.split('/');
+      segments.pop();  // Remove the last segment
+      var tmp =  segments.join('/');
+      this.refreshPath(tmp);
+    }
+  }
+
+  menuOpen(itemName,itemType){
+    if(itemType != "file"){
+      this.refreshPath(this.props.podPath.path + "/" + itemName);
+    }
+  }
+
   render() {
     const { path, items, txtFolderName } = this.state;
     var refreshLink = "";
@@ -162,6 +194,8 @@ export class OFileManager extends React.Component {
         refreshLink = this.props.podPath.path.replace("/path","");
       }
     }
+
+    
     
     return (
       <Box p={5} borderWidth="1px" borderRadius="lg">
@@ -185,6 +219,7 @@ export class OFileManager extends React.Component {
               <Button onClick={()=>this.refreshPath(this.state.reqPath)}>
                 Go
               </Button>
+              <Button onClick={()=>this.backBtn()}>Back</Button>
               <InputLeftAddon>Create</InputLeftAddon>
               <ButtonGroup>
                 <ODrawer
@@ -225,7 +260,7 @@ export class OFileManager extends React.Component {
                   _hover={{ bg: "blue.100" }}
                 >
                   <Menu>
-                    <MenuButton as={Button} rightIcon={<ChevronDownIcon />}>
+                    <MenuButton as={Button} h="70px" rightIcon={<ChevronDownIcon />}>
                       <Icon
                         as={item.type === "file" ? FiFileText : FiFolder}
                         w={6}
@@ -236,8 +271,8 @@ export class OFileManager extends React.Component {
                       <Text>{item.size}</Text>
                     </MenuButton>
                     <MenuList>
-                      <MenuItem>Open</MenuItem>
-                      <MenuItem>Details</MenuItem>
+                      <MenuItem onClick={()=>this.menuOpen(item.name,item.type)}>Open</MenuItem>
+                      <MenuItem onClick={()=>this.setMainProject(item.name,item.type)}>Set as main project</MenuItem>
                     </MenuList>
                   </Menu>
                 </WrapItem>
