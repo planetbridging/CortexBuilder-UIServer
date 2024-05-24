@@ -24,9 +24,11 @@ import {
   OShowType,
   OSystemInfo,
 } from "./OTemplates";
+ 
 
 import logo from "./imgs/logo.jpg";
 import bg from "./imgs/bg.jpg";
+import OAi from "./OAi";
 
 var currentHost = window.location.hostname;
 
@@ -40,6 +42,11 @@ class OHome extends React.Component {
     lstPodPath: new Map(),
     lstDataPodConfigs: new Map(),
   };
+
+  constructor(props) {
+    super(props);
+    this.refreshADataPodConfig = this.refreshADataPodConfig.bind(this);
+  }
 
   componentDidMount() {
     const ws = new WebSocket(wsUrl + "/ws");
@@ -193,7 +200,7 @@ class OHome extends React.Component {
     for (var tmpClientUUID in lstDataPods) {
       const client = lstDataPods[tmpClientUUID];
       var podSpec = lstPodSpecs.get(client.uuid);
-      var podConfig = lstDataPodConfigs.get(client.uuid);
+      const podConfig = lstDataPodConfigs.get(client.uuid);
       if (podSpec == null || podSpec == undefined) {
         podSpec = {
           arch: "",
@@ -245,7 +252,7 @@ class OHome extends React.Component {
                 </Heading>
               </CardHeader>
 
-              <CardBody></CardBody>
+              <CardBody><OAi podConfig={podConfig} refreshADataPodConfig={this.refreshADataPodConfig} uuid={client.uuid}/></CardBody>
               <CardFooter>
                 <HStack>
                   <ODrawer
@@ -256,7 +263,7 @@ class OHome extends React.Component {
                         uuid={client.uuid}
                         podPath={lstPodPath.get(client.uuid)}
                         podConfig={podConfig}
-                        refreshADataPodConfig={this.refreshADataPodConfig.bind(this)}
+                        refreshADataPodConfig={this.refreshADataPodConfig}
                         currentHost={currentHost}
                       />
                     }

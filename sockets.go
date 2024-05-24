@@ -94,7 +94,7 @@ func handleWebsocketConnection(c *websocket.Conn) {
 			// Data to be sent in the POST request
 			postData := map[string]interface{}{
 				"Path": "/config.json", // Ensure this path is allowed by your server logic
-				"Data": "{setProjectPath: '"+responseData.SetProjectPath+"'}",
+				"Data": "{'setProjectPath': '"+responseData.SetProjectPath+"'}",
 			}
 
 			// Send POST request
