@@ -18,6 +18,13 @@ func setupHTTPClients() {
 }
 
 func reverseProxyHandler(c *fiber.Ctx) error {
+
+    // Manually set CORS headers
+    c.Set("Access-Control-Allow-Origin", "*")
+    c.Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+    c.Set("Access-Control-Allow-Headers", "Origin, Content-Type, Accept, Authorization")
+   
+
     // Extract the UUID and the file path from the URL
     uuid := c.Params("uuid")
     filePath := c.Params("*")

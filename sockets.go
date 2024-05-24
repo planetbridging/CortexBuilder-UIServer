@@ -38,6 +38,11 @@ type ResponseDataSimple struct {
 	Type     string `json:"type"`
 }
 
+type DataPodConfig struct {
+	UUID     string `json:"uuid"`
+	SetProjectPath     string `json:"setProjectPath"`
+}
+
 var (
 	clients   = make(map[*websocket.Conn]bool) // stores all active clients
 	clientsMu sync.Mutex                       // ensures that updates to the clients map are thread-safe
@@ -71,19 +76,15 @@ func handleWebsocketConnection(c *websocket.Conn) {
 
 		switch msg.Type {
 		case "setCurrentProjectPath":
-			/*type ResponseDataSimple struct {
-	UUID     string `json:"uuid"`
-	Path     string `json:"path"`
-	Type     string `json:"type"`
-}*/
-			var responseData ResponseDataSimple
+
+			var responseData DataPodConfig
 			err := json.Unmarshal([]byte(msg.Data), &responseData)
 			if err != nil {
 				log.Println("json unmarshal data:", err)
 				break
 			}
 
-			fmt.Println(responseData.Path, responseData.UUID)
+			//fmt.Println(responseData.SetProjectPath, responseData.UUID)
 
 			foundDataCache := getClientRemoteAddr(responseData.UUID)
 
@@ -93,7 +94,7 @@ func handleWebsocketConnection(c *websocket.Conn) {
 			// Data to be sent in the POST request
 			postData := map[string]interface{}{
 				"Path": "/config.json", // Ensure this path is allowed by your server logic
-				"Data": "{hello: 'bob'}",
+				"Data": "{setProjectPath: '"+responseData.SetProjectPath+"'}",
 			}
 
 			// Send POST request

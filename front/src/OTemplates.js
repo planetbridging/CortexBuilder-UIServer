@@ -95,14 +95,6 @@ export class OFunction extends React.Component {
   }
 }
 
-// Define a class for the file system item
-class FileSystemItem {
-  constructor(name, icon) {
-    this.name = name;
-    this.icon = icon;
-  }
-}
-
 // Define a class for the file manager
 export class OFileManager extends React.Component {
   constructor(props) {
@@ -111,11 +103,7 @@ export class OFileManager extends React.Component {
     this.state = {
       reqPath: "",
       path: "Home > Documents",
-      items: [
-        //new FileSystemItem("Folder 1", FiFolder),
-        //new FileSystemItem("File 1.txt", FiFileText),
-        // ... add more items
-      ],
+      items: [],
       txtFolderName: "",
     };
   }
@@ -125,22 +113,24 @@ export class OFileManager extends React.Component {
     this.refreshPath("/path");
   }
 
-  setMainProject(itemName,itemType){
-
-    if(itemType != "file"){
-      const message = {
-        type: "setCurrentProjectPath",
-        data: JSON.stringify({
-          path: this.props.podPath.path + "/" + itemName,
-          uuid: this.props.uuid,
-        }),
-      };
-      this.props.ws.send(JSON.stringify(message));
+  setMainProject(itemName, itemType) {
+    if (itemType != "file") {
+      try{
+        const message = {
+          type: "setCurrentProjectPath",
+          data: JSON.stringify({
+            uuid: this.props.uuid,
+            setProjectPath: this.props.podPath.path + "/" + itemName,
+          }),
+        };
+        this.props.ws.send(JSON.stringify(message));
+        this.props.refreshADataPodConfig(this.props.uuid);
+      }catch(ex){
+        console.log("Unable to set new config",ex);
+      }
+      
     }
-   
   }
-
-
 
   refreshPath(path) {
     const message = {
@@ -171,39 +161,35 @@ export class OFileManager extends React.Component {
     }
   }
 
-  backBtn(){
-    if(this.props.podPath.path.includes("/")){
-      const segments = this.props.podPath.path.split('/');
-      segments.pop();  // Remove the last segment
-      var tmp =  segments.join('/');
+  backBtn() {
+    if (this.props.podPath.path.includes("/")) {
+      const segments = this.props.podPath.path.split("/");
+      segments.pop(); // Remove the last segment
+      var tmp = segments.join("/");
       this.refreshPath(tmp);
     }
   }
 
-  menuOpen(itemName,itemType){
-    if(itemType != "file"){
+  menuOpen(itemName, itemType) {
+    if (itemType != "file") {
       this.refreshPath(this.props.podPath.path + "/" + itemName);
+    }else{
+      var tmpNewPath = this.props.podPath.path.replace("/path","/files") +"/" +this.props.uuid + "/";
+      var fullPath = "http://" + this.props.currentHost  +":4124"+tmpNewPath+itemName;
+      window.open(fullPath, '_blank');
     }
   }
 
   render() {
     const { path, items, txtFolderName } = this.state;
-    var refreshLink = "";
-    if(this.props.podPath){
-      if(this.props.podPath.path){
-        refreshLink = this.props.podPath.path.replace("/path","");
-      }
-    }
 
-    
-    
     return (
       <Box p={5} borderWidth="1px" borderRadius="lg">
         {/* Path */}
         {this.props.podPath ? (
           <Box>
             <InputGroup>
-              <Button onClick={()=>this.refreshPath(refreshLink)}>
+              <Button onClick={() => this.refreshPath(this.props.podPath.path)}>
                 <RepeatIcon />
               </Button>
               <Text mb={4} fontSize="lg" fontWeight="bold">
@@ -216,10 +202,10 @@ export class OFileManager extends React.Component {
                   />
                 </InputGroup>
               </Text>
-              <Button onClick={()=>this.refreshPath(this.state.reqPath)}>
+              <Button onClick={() => this.refreshPath(this.state.reqPath)}>
                 Go
               </Button>
-              <Button onClick={()=>this.backBtn()}>Back</Button>
+              <Button onClick={() => this.backBtn()}>Back</Button>
               <InputLeftAddon>Create</InputLeftAddon>
               <ButtonGroup>
                 <ODrawer
@@ -251,35 +237,50 @@ export class OFileManager extends React.Component {
             {/* File System Items */}
             <Wrap gap={2}>
               {this.props.podPath.contents ? (
-              <>
-              {this.props.podPath.contents.map((item, index) => (
-                <WrapItem
-                  key={index}
-                  align="center"
-                  p={2}
-                  _hover={{ bg: "blue.100" }}
-                >
-                  <Menu>
-                    <MenuButton as={Button} h="70px" rightIcon={<ChevronDownIcon />}>
-                      <Icon
-                        as={item.type === "file" ? FiFileText : FiFolder}
-                        w={6}
-                        h={6}
-                        mr={2}
-                      />
-                      <Text>{item.name}</Text>
-                      <Text>{item.size}</Text>
-                    </MenuButton>
-                    <MenuList>
-                      <MenuItem onClick={()=>this.menuOpen(item.name,item.type)}>Open</MenuItem>
-                      <MenuItem onClick={()=>this.setMainProject(item.name,item.type)}>Set as main project</MenuItem>
-                    </MenuList>
-                  </Menu>
-                </WrapItem>
-              ))}
-              </>
-              ) : <p>Folder is empty</p>}
-            
+                <>
+                  {this.props.podPath.contents.map((item, index) => (
+                    <WrapItem
+                      key={index}
+                      align="center"
+                      p={2}
+                      _hover={{ bg: "blue.100" }}
+                    >
+                      <Menu>
+                        <MenuButton
+                          as={Button}
+                          h="70px"
+                          rightIcon={<ChevronDownIcon />}
+                        >
+                          <Icon
+                            as={item.type === "file" ? FiFileText : FiFolder}
+                            w={6}
+                            h={6}
+                            mr={2}
+                          />
+                          <Text>{item.name}</Text>
+                          <Text>{item.size}</Text>
+                        </MenuButton>
+                        <MenuList>
+                          <MenuItem
+                            onClick={() => this.menuOpen(item.name, item.type)}
+                          >
+                            Open
+                          </MenuItem>
+                          <MenuItem
+                            onClick={() =>
+                              this.setMainProject(item.name, item.type)
+                            }
+                          >
+                            Set as main project
+                          </MenuItem>
+                        </MenuList>
+                      </Menu>
+                    </WrapItem>
+                  ))}
+                </>
+              ) : (
+                <p>Folder is empty</p>
+              )}
             </Wrap>
           </Box>
         ) : null}

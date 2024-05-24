@@ -15,6 +15,8 @@ import {
 } from "@chakra-ui/react";
 import React from "react";
 import { FaComputer } from "react-icons/fa6";
+import axios from "axios";
+
 import {
   ODrawer,
   OFileManager,
@@ -36,8 +38,8 @@ class OHome extends React.Component {
     lstDataPods: [],
     lstPodSpecs: new Map(),
     lstPodPath: new Map(),
+    lstDataPodConfigs: new Map(),
   };
-
 
   componentDidMount() {
     const ws = new WebSocket(wsUrl + "/ws");
@@ -97,17 +99,15 @@ class OHome extends React.Component {
               data: "",
             };
             ws.send(JSON.stringify(message));
-            this.setState(
-              {
-                lstDataPods: lstCurrent,
-              }
-            );
+            this.setState({
+              lstDataPods: lstCurrent,
+            });
           }
 
           break;
         default:
-          console.log("unknown message type:", message.Type);
-          console.log(message);
+          //console.log("unknown message type:", message.Type);
+          //console.log(message);
           this.mainMsgs(message);
       }
     };
@@ -118,10 +118,27 @@ class OHome extends React.Component {
     this.setState({ ws: ws });
   }
 
-  mainMsgs(msg) {
+  async refreshADataPodConfig(uuid){
+    const {lstDataPodConfigs} = this.state; 
+
+    try {
+      var configUrlPath =
+        "http://" + currentHost + ":4124/files/" + uuid + "/config.json";
+      var configDataReq = await axios.get(configUrlPath);
+      var configData = configDataReq.data;
+
+      lstDataPodConfigs.set(uuid, configData);
+      console.log("--------new data pod config-------");
+      console.log(lstDataPodConfigs);
+    } catch (ex) {
+      console.log("Unable to load config", ex);
+    }
+  }
+
+  async mainMsgs(msg) {
     switch (msg.cmd) {
       case "sysinfo":
-        console.log(msg);
+        //console.log(msg);
         var lstMpTmp = this.state.lstPodSpecs;
         if (!lstMpTmp.has(msg.id)) {
           const tmpId = msg.id;
@@ -129,6 +146,20 @@ class OHome extends React.Component {
           lstMpTmp.set(tmpId, msg);
           var lstPodPathTmp = this.state.lstPodPath;
           lstPodPathTmp.set(tmpId, null);
+          var lstDataPodConfigs = this.state.lstDataPodConfigs;
+          try {
+            var configUrlPath =
+              "http://" + currentHost + ":4124/files/" + tmpId + "/config.json";
+            var configDataReq = await axios.get(configUrlPath);
+            var configData = configDataReq.data;
+
+            lstDataPodConfigs.set(tmpId, configData);
+            console.log("--------new data pod config-------");
+            console.log(lstDataPodConfigs);
+          } catch (ex) {
+            console.log("Unable to load config", ex);
+          }
+
           this.setState({ lstPodSpecs: lstMpTmp, lstPodPath: lstPodPathTmp });
         }
         break;
@@ -145,8 +176,6 @@ class OHome extends React.Component {
         }
         break;
     }
-
-    console.log(msg);
   }
 
   shortenUUID(uuid) {
@@ -158,12 +187,13 @@ class OHome extends React.Component {
   }
 
   fixingNewSyncManuallyRebuilding() {
-    const { ws, lstPodPath, lstDataPods, lstPodSpecs } = this.state;
+    const { ws, lstPodPath, lstDataPods, lstPodSpecs,lstDataPodConfigs } = this.state;
     var lst = [];
 
     for (var tmpClientUUID in lstDataPods) {
       const client = lstDataPods[tmpClientUUID];
       var podSpec = lstPodSpecs.get(client.uuid);
+      var podConfig = lstDataPodConfigs.get(client.uuid);
       if (podSpec == null || podSpec == undefined) {
         podSpec = {
           arch: "",
@@ -225,6 +255,9 @@ class OHome extends React.Component {
                         ws={ws}
                         uuid={client.uuid}
                         podPath={lstPodPath.get(client.uuid)}
+                        podConfig={podConfig}
+                        refreshADataPodConfig={this.refreshADataPodConfig.bind(this)}
+                        currentHost={currentHost}
                       />
                     }
                     btnOpenText={
@@ -354,7 +387,7 @@ class OHome extends React.Component {
           <Button
             style={{ backgroundImage: `url(${logo})`, backgroundSize: "cover" }}
           >
-            <Text color="white">Cortex Builder {new Date().toISOString()}</Text>
+            <Text color="white">Cortex Builder</Text>
           </Button>
         </Box>
 
