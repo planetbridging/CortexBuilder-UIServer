@@ -17,6 +17,7 @@ import React from "react";
 import { FaComputer } from "react-icons/fa6";
 import axios from "axios";
 
+
 import {
   ODrawer,
   OFileManager,
@@ -137,6 +138,7 @@ class OHome extends React.Component {
       lstDataPodConfigs.set(uuid, configData);
       console.log("--------new data pod config-------");
       console.log(lstDataPodConfigs);
+      this.setState({lstDataPodConfigs:lstDataPodConfigs});
     } catch (ex) {
       console.log("Unable to load config", ex);
     }
@@ -167,7 +169,7 @@ class OHome extends React.Component {
             console.log("Unable to load config", ex);
           }
 
-          this.setState({ lstPodSpecs: lstMpTmp, lstPodPath: lstPodPathTmp });
+          this.setState({ lstPodSpecs: lstMpTmp, lstPodPath: lstPodPathTmp,lstDataPodConfigs: lstDataPodConfigs });
         }
         break;
     }

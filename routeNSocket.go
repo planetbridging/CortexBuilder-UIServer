@@ -20,19 +20,19 @@ func setupHTTPClients() {
 func reverseProxyHandler(c *fiber.Ctx) error {
 
     // Manually set CORS headers
-    c.Set("Access-Control-Allow-Origin", "*")
+    /*c.Set("Access-Control-Allow-Origin", "*")
     c.Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
     c.Set("Access-Control-Allow-Headers", "Origin, Content-Type, Accept, Authorization")
-   
+   */
 
     // Extract the UUID and the file path from the URL
     uuid := c.Params("uuid")
     filePath := c.Params("*")
-    log.Printf("UUID: %s, File Path: %s\n", uuid, filePath)
+    //log.Printf("UUID: %s, File Path: %s\n", uuid, filePath)
 
     // Get the remote address (IP:port) for the given UUID
     serverAddress := getClientRemoteAddr(uuid)
-    log.Println("Original server address:", serverAddress)
+    //log.Println("Original server address:", serverAddress)
     if serverAddress == "" {
         return c.Status(fiber.StatusNotFound).SendString("Server not found for UUID")
     }
@@ -46,8 +46,9 @@ func reverseProxyHandler(c *fiber.Ctx) error {
     if host == "::1" {
         serverAddress = "127.0.0.1:" + port
     }
+    log.Println(host);
 
-    log.Println("Adjusted server address:", serverAddress)
+    //log.Println("Adjusted server address:", serverAddress)
 
     // Update request URL for proxying
     c.Request().SetRequestURI("/files/" + filePath)

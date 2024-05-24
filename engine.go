@@ -27,11 +27,24 @@ func main() {
 
 	app := fiber.New()
 
-	app.Use(cors.New(cors.Config{
+	/*app.Use(cors.New(cors.Config{
 		AllowOrigins: "*",
 		AllowMethods: "GET,POST",
 		AllowHeaders: "Origin, Content-Type, Accept",
+	}))*/
+
+	app.Use(cors.New(cors.Config{
+		AllowOrigins: "*", // Allows all domains
+		AllowMethods: "GET,POST,PUT,DELETE,OPTIONS",
+		AllowHeaders: "Origin, Content-Type, Accept, Authorization",
+		ExposeHeaders: "Content-Length, Access-Control-Allow-Origin, Access-Control-Allow-Headers, Cache-Control, Content-Language, Content-Type",
+		AllowCredentials: false,
 	}))
+	
+
+app.Use(customCORSHandler) // Use custom CORS before your routes or global middleware
+
+	
 
 	go setupDMClients()
 
@@ -52,4 +65,18 @@ func main() {
 	if err != nil {
 		fmt.Println(err)
 	}
+}
+
+
+func customCORSHandler(c *fiber.Ctx) error {
+    c.Set("Access-Control-Allow-Origin", c.Get("Origin")) // Echo back the Origin header, or specify dynamically
+    c.Set("Access-Control-Allow-Credentials", "true")
+    c.Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+    c.Set("Access-Control-Allow-Headers", "Origin, Content-Type, Accept, Authorization")
+    
+    if c.Method() == "OPTIONS" {
+        return c.SendStatus(fiber.StatusOK) // Handle preflight requests
+    }
+
+    return c.Next()
 }
