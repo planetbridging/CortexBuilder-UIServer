@@ -38,6 +38,7 @@ class OHome extends React.Component {
     lstPodPath: new Map(),
   };
 
+
   componentDidMount() {
     const ws = new WebSocket(wsUrl + "/ws");
     ws.onopen = () => {
@@ -59,8 +60,50 @@ class OHome extends React.Component {
         case "getClients":
           // Parse new client data
           const lstDataPods = JSON.parse(message.lstDataCache);
-          // Compare with current state
-          this.setState({ lstDataPods: lstDataPods });
+
+          const dataPodsMap = lstDataPods.reduce((acc, client) => {
+            acc.set(client.uuid, client);
+            return acc;
+          }, new Map());
+
+          const currentLstDataPods = this.state.lstDataPods.reduce(
+            (acc, client) => {
+              acc.set(client.uuid, client);
+              return acc;
+            },
+            new Map()
+          );
+
+          var lstCurrent = this.state.lstDataPods;
+          var changeFound = false;
+
+          for (const [key, value] of dataPodsMap.entries()) {
+            if (!currentLstDataPods.has(key)) {
+              lstCurrent.push(value);
+              changeFound = true;
+            }
+          }
+
+          for (var i in lstCurrent) {
+            if (!dataPodsMap.has(lstCurrent[i].uuid)) {
+              lstCurrent.splice(i, 1);
+              changeFound = true;
+            }
+          }
+
+          if (changeFound) {
+            const message = {
+              type: "ping",
+              data: "",
+            };
+            ws.send(JSON.stringify(message));
+            this.setState(
+              {
+                lstDataPods: lstCurrent,
+              }
+            );
+          }
+
           break;
         default:
           console.log("unknown message type:", message.Type);
@@ -76,7 +119,6 @@ class OHome extends React.Component {
   }
 
   mainMsgs(msg) {
-  
     switch (msg.cmd) {
       case "sysinfo":
         console.log(msg);
@@ -86,28 +128,23 @@ class OHome extends React.Component {
           delete msg.id;
           lstMpTmp.set(tmpId, msg);
           var lstPodPathTmp = this.state.lstPodPath;
-          lstPodPathTmp.set(tmpId,null);
-          this.setState({ lstPodSpecs: lstMpTmp,lstPodPath: lstPodPathTmp });
+          lstPodPathTmp.set(tmpId, null);
+          this.setState({ lstPodSpecs: lstMpTmp, lstPodPath: lstPodPathTmp });
         }
         break;
     }
 
-   
-
-  
-   
-      switch(msg.type){
-        case "reqPathFromCache":
-          if(this.state.lstPodPath.has(msg.uuid)){
-            var lstPodPathTmp = this.state.lstPodPath;
-            const tmpId = msg.uuid;
-            delete msg.uuid;
-            lstPodPathTmp.set(tmpId,msg);
-            this.setState({ lstPodPath: lstPodPathTmp });
-          }
+    switch (msg.type) {
+      case "reqPathFromCache":
+        if (this.state.lstPodPath.has(msg.uuid)) {
+          var lstPodPathTmp = this.state.lstPodPath;
+          const tmpId = msg.uuid;
+          delete msg.uuid;
+          lstPodPathTmp.set(tmpId, msg);
+          this.setState({ lstPodPath: lstPodPathTmp });
+        }
         break;
-      }
-    
+    }
 
     console.log(msg);
   }
@@ -120,8 +157,193 @@ class OHome extends React.Component {
     return uuid;
   }
 
+  fixingNewSyncManuallyRebuilding() {
+    const { ws, lstPodPath, lstDataPods, lstPodSpecs } = this.state;
+    var lst = [];
+
+    for (var tmpClientUUID in lstDataPods) {
+      const client = lstDataPods[tmpClientUUID];
+      var podSpec = lstPodSpecs.get(client.uuid);
+      if (podSpec == null || podSpec == undefined) {
+        podSpec = {
+          arch: "",
+          cachePath: "",
+          cmd: "",
+          ip: "",
+          numCPU: "",
+          os: "",
+          pcType: "",
+          port: "",
+          id: client.uuid,
+        };
+      }
+
+      if (client != null || client != undefined) {
+        lst.push(
+          <WrapItem key={client.uuid}>
+            <Card
+              style={{
+                backgroundColor: "rgba(255, 255, 255, 0.1)",
+                backdropFilter: "blur(10px)",
+                boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.2)",
+              }}
+            >
+              <CardHeader>
+                <Heading size="md">
+                  <HStack>
+                    <OShowType pcType={podSpec.pcType} />
+                    <Text color="white">{this.shortenUUID(client.uuid)}</Text>
+                    {podSpec && (
+                      <ODrawer
+                        header={"System info"}
+                        content={
+                          <OSystemInfo
+                            id={client.uuid}
+                            arch={podSpec.arch}
+                            cachePath={podSpec.cachePath}
+                            ip={podSpec.ip}
+                            numCPU={podSpec.numCPU}
+                            os={podSpec.os}
+                            port={podSpec.port}
+                          />
+                        }
+                        btnOpenText={<FaComputer />}
+                        btnSize={"sm"}
+                      />
+                    )}
+                  </HStack>
+                </Heading>
+              </CardHeader>
+
+              <CardBody></CardBody>
+              <CardFooter>
+                <HStack>
+                  <ODrawer
+                    header={"System info"}
+                    content={
+                      <OFileManager
+                        ws={ws}
+                        uuid={client.uuid}
+                        podPath={lstPodPath.get(client.uuid)}
+                      />
+                    }
+                    btnOpenText={
+                      <OFunction
+                        pcType={podSpec.pcType}
+                        uuid={client.uuid}
+                        cachePath={podSpec.cachePath}
+                      />
+                    }
+                    btnSize={"sm"}
+                    placement={"top"}
+                  />
+                </HStack>
+              </CardFooter>
+            </Card>
+          </WrapItem>
+        );
+      }
+    }
+
+    return <Wrap>{lst}</Wrap>;
+  }
+
+  oldImplementationDysyncIssues() {
+    const { ws, lstPodPath, lstDataPods, lstPodSpecs } = this.state;
+    return (
+      <Wrap>
+        {lstDataPods.map((client, index) => {
+          const podSpec = lstPodSpecs.get(client.uuid);
+          if (!podSpec) {
+            try {
+              podSpec = {
+                arch: "",
+                cachePath: "",
+                cmd: "",
+                ip: "",
+                numCPU: "",
+                os: "",
+                pcType: "",
+                port: "",
+                id: client.uuid,
+              };
+            } catch {}
+          }
+          //console.log(podSpec);
+          if (podSpec == undefined || podSpec == null) {
+            return;
+          }
+          return (
+            <WrapItem key={client.uuid}>
+              <Card
+                style={{
+                  backgroundColor: "rgba(255, 255, 255, 0.1)",
+                  backdropFilter: "blur(10px)",
+                  boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.2)",
+                }}
+              >
+                <CardHeader>
+                  <Heading size="md">
+                    <HStack>
+                      <OShowType pcType={podSpec.pcType} />
+                      <Text color="white">{this.shortenUUID(client.uuid)}</Text>
+                      {podSpec && (
+                        <ODrawer
+                          header={"System info"}
+                          content={
+                            <OSystemInfo
+                              id={client.uuid}
+                              arch={podSpec.arch}
+                              cachePath={podSpec.cachePath}
+                              ip={podSpec.ip}
+                              numCPU={podSpec.numCPU}
+                              os={podSpec.os}
+                              port={podSpec.port}
+                            />
+                          }
+                          btnOpenText={<FaComputer />}
+                          btnSize={"sm"}
+                        />
+                      )}
+                    </HStack>
+                  </Heading>
+                </CardHeader>
+
+                <CardBody></CardBody>
+                <CardFooter>
+                  <HStack>
+                    <ODrawer
+                      header={"System info"}
+                      content={
+                        <OFileManager
+                          ws={ws}
+                          uuid={client.uuid}
+                          podPath={lstPodPath.get(client.uuid)}
+                        />
+                      }
+                      btnOpenText={
+                        <OFunction
+                          pcType={podSpec.pcType}
+                          uuid={client.uuid}
+                          cachePath={podSpec.cachePath}
+                        />
+                      }
+                      btnSize={"sm"}
+                      placement={"top"}
+                    />
+                  </HStack>
+                </CardFooter>
+              </Card>
+            </WrapItem>
+          );
+        })}
+      </Wrap>
+    );
+  }
+
   render() {
-    const { ws,lstPodPath } = this.state;
+    const { ws, lstPodPath, lstDataPods, lstPodSpecs } = this.state;
+    console.log(lstDataPods);
     return (
       <Box
         h="100vh"
@@ -132,92 +354,11 @@ class OHome extends React.Component {
           <Button
             style={{ backgroundImage: `url(${logo})`, backgroundSize: "cover" }}
           >
-            <Text color="white">Cortex Builder</Text>
+            <Text color="white">Cortex Builder {new Date().toISOString()}</Text>
           </Button>
         </Box>
-        <Wrap>
-          {this.state.lstDataPods.map((client, index) => {
-            const podSpec = this.state.lstPodSpecs.get(client.uuid);
-            if (!podSpec) {
-              try{
-                podSpec = {
-                  arch: "",
-                  cachePath: "",
-                  cmd: "",
-                  ip: "",
-                  numCPU: "",
-                  os: "",
-                  pcType: "",
-                  port: "",
-                  id: client.uuid,
-                };
-              }catch{}
-            }
-            //console.log(podSpec);
-            if(podSpec == undefined || podSpec == null){
-              return 
-            }
-            return (
-              <WrapItem key={index}>
-                <Card
-                  style={{
-                    backgroundColor: "rgba(255, 255, 255, 0.1)",
-                    backdropFilter: "blur(10px)",
-                    boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.2)",
-                  }}
-                >
-                  <CardHeader>
-                    <Heading size="md">
-                      <HStack>
-                        <OShowType pcType={podSpec.pcType} />
-                        <Text color="white">
-                          {this.shortenUUID(client.uuid)}
-                        </Text>
-                        {podSpec && (
-                          <ODrawer
-                            header={"System info"}
-                            content={
-                              <OSystemInfo
-                                id={client.uuid}
-                                arch={podSpec.arch}
-                                cachePath={podSpec.cachePath}
-                                ip={podSpec.ip}
-                                numCPU={podSpec.numCPU}
-                                os={podSpec.os}
-                                port={podSpec.port}
-                              />
-                            }
-                            btnOpenText={<FaComputer />}
-                            btnSize={"sm"}
-                          />
-                        )}
-                      </HStack>
-                    </Heading>
-                  </CardHeader>
 
-                  <CardBody></CardBody>
-                  <CardFooter>
-                    <HStack>
-                      <ODrawer
-                        header={"System info"}
-                        content={<OFileManager ws={ws} uuid={client.uuid} podPath={lstPodPath.get(client.uuid)} />}
-                        btnOpenText={
-                          <OFunction
-                            pcType={podSpec.pcType}
-                            uuid={client.uuid}
-                            cachePath={podSpec.cachePath}
-                          />
-                        }
-                        btnSize={"sm"}
-                        placement={"top"}
-                      />
-                    </HStack>
-                  </CardFooter>
-                </Card>
-              </WrapItem>
-            );
-          })}
-        </Wrap>
+        {this.fixingNewSyncManuallyRebuilding()}
       </Box>
     );
   }
