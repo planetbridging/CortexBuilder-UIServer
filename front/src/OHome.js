@@ -17,7 +17,6 @@ import React from "react";
 import { FaComputer } from "react-icons/fa6";
 import axios from "axios";
 
-
 import {
   ODrawer,
   OFileManager,
@@ -25,7 +24,6 @@ import {
   OShowType,
   OSystemInfo,
 } from "./OTemplates";
- 
 
 import logo from "./imgs/logo.jpg";
 import bg from "./imgs/bg.jpg";
@@ -126,8 +124,8 @@ class OHome extends React.Component {
     this.setState({ ws: ws });
   }
 
-  async refreshADataPodConfig(uuid){
-    const {lstDataPodConfigs} = this.state; 
+  async refreshADataPodConfig(uuid) {
+    const { lstDataPodConfigs } = this.state;
 
     try {
       var configUrlPath =
@@ -138,7 +136,7 @@ class OHome extends React.Component {
       lstDataPodConfigs.set(uuid, configData);
       console.log("--------new data pod config-------");
       console.log(lstDataPodConfigs);
-      this.setState({lstDataPodConfigs:lstDataPodConfigs});
+      this.setState({ lstDataPodConfigs: lstDataPodConfigs });
     } catch (ex) {
       console.log("Unable to load config", ex);
     }
@@ -169,7 +167,11 @@ class OHome extends React.Component {
             console.log("Unable to load config", ex);
           }
 
-          this.setState({ lstPodSpecs: lstMpTmp, lstPodPath: lstPodPathTmp,lstDataPodConfigs: lstDataPodConfigs });
+          this.setState({
+            lstPodSpecs: lstMpTmp,
+            lstPodPath: lstPodPathTmp,
+            lstDataPodConfigs: lstDataPodConfigs,
+          });
         }
         break;
     }
@@ -196,7 +198,8 @@ class OHome extends React.Component {
   }
 
   fixingNewSyncManuallyRebuilding() {
-    const { ws, lstPodPath, lstDataPods, lstPodSpecs,lstDataPodConfigs } = this.state;
+    const { ws, lstPodPath, lstDataPods, lstPodSpecs, lstDataPodConfigs } =
+      this.state;
     var lst = [];
 
     for (var tmpClientUUID in lstDataPods) {
@@ -254,7 +257,14 @@ class OHome extends React.Component {
                 </Heading>
               </CardHeader>
 
-              <CardBody><OAi podConfig={podConfig} refreshADataPodConfig={this.refreshADataPodConfig} uuid={client.uuid}/></CardBody>
+              <CardBody>
+                <OAi
+                  podConfig={podConfig}
+                  refreshADataPodConfig={this.refreshADataPodConfig}
+                  uuid={client.uuid}
+                  podSpec={podSpec}
+                />
+              </CardBody>
               <CardFooter>
                 <HStack>
                   <ODrawer

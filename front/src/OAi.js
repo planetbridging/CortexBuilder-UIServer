@@ -57,10 +57,12 @@ class OAi extends React.Component {
 
   render() {
     const { setProjectPath } = this.state;
-    console.log(this.props.podConfig, this.props.podConfig?.setProjectPath);
+    //console.log(this.props.podConfig, this.props.podConfig?.setProjectPath);
     return (
       <Stack bg="white">
+        <Text>{this.props.podSpec.ip}</Text>
         <ButtonGroup>
+          
         <Button
           onClick={() => this.props.refreshADataPodConfig(this.props.uuid)}
         >
