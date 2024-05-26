@@ -124,6 +124,7 @@ func handleWebsocketConnection(c *websocket.Conn) {
 				break
 			}
 			broadcastMessage("sysinfo", "")
+			broadcastMessageAI("sysinfo", "")
 		case "reqPathFromCache":
 			var data PathData
 			err := json.Unmarshal([]byte(msg.Data), &data)
@@ -201,12 +202,15 @@ func handleWebsocketConnection(c *websocket.Conn) {
 
 func sendClientsInfo() {
 	clientsInfo := getClientsInfo()
+	clientsInfoAI := getClientsInfoAI()
 	//fmt.Println(clientsInfo)
 
 	response := struct {
-		LstDataCache string `json:"lstDataCache"`
+		LstAiPods string `json:"lstAiPods"` 
+		LstDataCache string `json:"lstDataCache"`  
 		Type         string `json:type"`
 	}{
+		LstAiPods: clientsInfoAI,
 		LstDataCache: clientsInfo,
 		Type:         "getClients",
 	}

@@ -47,6 +47,7 @@ app.Use(customCORSHandler) // Use custom CORS before your routes or global middl
 	
 
 	go setupDMClients()
+	go setupAIClients()
 
 	setupRoutes(app)
 
