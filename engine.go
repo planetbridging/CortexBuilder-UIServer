@@ -3,11 +3,11 @@ package main
 import (
 	"fmt"
 	"os"
-	"time"
+	//"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
-	"github.com/gofiber/websocket/v2"
+	//"github.com/gofiber/websocket/v2"
 	
 	"github.com/joho/godotenv"
 )
@@ -46,12 +46,13 @@ app.Use(customCORSHandler) // Use custom CORS before your routes or global middl
 
 	
 
-	go setupDMClients()
-	go setupAIClients()
+	//go setupDMClients()
+	//go setupAIClients()
+	go tcpClientSetup()
 
 	setupRoutes(app)
 
-	app.Use("/ws", websocket.New(handleWebsocketConnection))
+	/*app.Use("/ws", websocket.New(handleWebsocketConnection))
 
 	go func() {
 		ticker := time.NewTicker(1 * time.Second)
@@ -60,7 +61,7 @@ app.Use(customCORSHandler) // Use custom CORS before your routes or global middl
 		for range ticker.C {
 			sendClientsInfo()
 		}
-	}()
+	}()*/
 
 	err = app.Listen(":" + envPort)
 	if err != nil {

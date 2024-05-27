@@ -11,7 +11,7 @@ import (
 func setupRoutes(app *fiber.App) {
 	app.Get("/", func(c *fiber.Ctx) error {
 		//broadcastMessage(action string, path string)  testing
-		broadcastMessage("mount", "./host/data.csv")
+		//broadcastMessage("mount", "./host/data.csv")
 		return c.SendString("Hello, World!")
 	})
 
