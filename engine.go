@@ -12,6 +12,8 @@ import (
 	"github.com/joho/godotenv"
 )
 
+var envPWD string
+
 func main() {
 	err := godotenv.Load()
 	if err != nil {
@@ -23,6 +25,13 @@ func main() {
 
 	if envPort == "" {
 		envPort = "4124"
+	}
+
+	envPWD = os.Getenv("SERVERPWD")
+	fmt.Println(envPWD)
+	if envPWD == "" {
+		envPWD = "securepassword"
+		//os.Setenv("FILE_PATH", envPath)
 	}
 
 	app := fiber.New()

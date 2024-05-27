@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"net"
@@ -64,7 +65,7 @@ func (cm *ClientManager) RemoveClient(addr string) {
 
 func (cm *ClientManager) ReconnectClient(client *Client) {
 	for {
-		conn, err := net.Dial("tcp", client.Addr)
+		conn, err := tls.Dial("tcp", client.Addr, &tls.Config{InsecureSkipVerify: true})
 		if err == nil {
 			client.Conn = conn
 			client.LastSeen = time.Now()
@@ -79,11 +80,26 @@ func (cm *ClientManager) ReconnectClient(client *Client) {
 
 func (cm *ClientManager) handleConnection(client *Client) {
 	defer client.Conn.Close()
-
-	// Send ping message once
-	client.Conn.Write([]byte("ping"))
+	// Send password for authentication
+	client.Conn.Write([]byte(envPWD))
 
 	buf := make([]byte, 1024)
+	n, err := client.Conn.Read(buf)
+	if err != nil {
+		cm.RemoveClient(client.Addr)
+		go cm.ReconnectClient(client)
+		return
+	}
+
+	if string(buf[:n]) != "Authenticated" {
+		fmt.Printf("Failed to authenticate with server %s\n", client.Addr)
+		cm.RemoveClient(client.Addr)
+		return
+	}
+
+	// Send ping message once authenticated
+	client.Conn.Write([]byte("ping"))
+
 	for {
 		n, err := client.Conn.Read(buf)
 		if err != nil {
@@ -122,7 +138,7 @@ func (cm *ClientManager) handleConnection(client *Client) {
 
 func attemptConnection(addr string, clientManager *ClientManager) {
 	for {
-		conn, err := net.Dial("tcp", addr)
+		conn, err := tls.Dial("tcp", addr, &tls.Config{InsecureSkipVerify: true})
 		if err == nil {
 			client := &Client{
 				Conn:     conn,
@@ -151,7 +167,6 @@ func tcpClientSetup() {
 	// Keep the main function running
 	select {}
 }
-
 
 // GetConnectedServersInfo returns a JSON string with information about all connected servers
 func (cm *ClientManager) GetConnectedServersInfo() (string, error) {
