@@ -108,62 +108,16 @@ class OHome extends React.Component {
             }
           }
 
-//------------ai sorting hat
-        
-          const lstAiPods = JSON.parse(message.lstAiPods);
-
-          const dataAIMap = lstAiPods.reduce((acc, client) => {
-            acc.set(client.uuid, client);
-            return acc;
-          }, new Map());
-
-          const currentlstAiPods = this.state.lstAiPods.reduce(
-            (acc, client) => {
-              acc.set(client.uuid, client);
-              return acc;
-            },
-            new Map()
-          );
-
-          var lstCurrentAI = this.state.lstAiPods;
-          var changeAiFound = false;
-
-          for (const [key, value] of dataAIMap.entries()) {
-            if (!currentlstAiPods.has(key)) {
-              lstCurrentAI.push(value);
-              changeAiFound = true;
-            }
-          }
-
-          for (var i in lstCurrentAI) {
-            if (!dataAIMap.has(lstCurrentAI[i].uuid)) {
-              lstCurrentAI.splice(i, 1);
-              changeAiFound = true;
-            }
-          }
-
-          if(changeAiFound || changeFound){
+          if(changeFound){
             const message = {
               type: "ping",
               data: "",
             };
             ws.send(JSON.stringify(message));
-            this.setState({
-              lstDataPods: lstCurrent,
-            });
           }
 
-          if (changeFound && !changeAiFound) {
+          if (changeFound) {
             this.setState({
-              lstDataPods: lstCurrent,
-            });
-          }else if(!changeFound && changeAiFound){
-            this.setState({
-              lstAiPods: lstCurrentAI,
-            });
-          }else if(changeFound && changeAiFound){
-            this.setState({
-              lstAiPods: lstCurrentAI,
               lstDataPods: lstCurrent,
             });
           }
@@ -180,6 +134,10 @@ class OHome extends React.Component {
       console.log("disconnected");
     };
     this.setState({ ws: ws });
+  }
+
+  async updatingDevices(msgLst,currentLst,savingName){
+
   }
 
   async refreshADataPodConfig(uuid) {
@@ -237,6 +195,7 @@ class OHome extends React.Component {
           }
         } else if (msg.pcType == "aiPod") {
           var lstMpTmp = this.state.lstPodSpecsAi;
+          console.log(lstMpTmp);
           if (!lstMpTmp.has(msg.id)) {
             const tmpId = msg.id;
             delete msg.id;

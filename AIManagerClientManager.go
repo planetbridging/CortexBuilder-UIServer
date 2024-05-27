@@ -99,7 +99,7 @@ func setupAIClients() {
 
 				c.Close()
 				log.Println("disconnected from", u.String())
-
+				
 				// Remove the client from the global clients map.
 				lockAI.Lock()
 				delete(clientsAI, clientUUID)
