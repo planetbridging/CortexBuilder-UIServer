@@ -16,7 +16,6 @@ type ServerInfo struct {
 	CPU          string `json:"cpu"`
 	ComputerType string `json:"computerType"`
 	IP           string `json:"ip"`
-	Port         string `json:"port"`
 }
 
 type Client struct {
@@ -120,12 +119,13 @@ func (cm *ClientManager) handleConnection(client *Client) {
 		}
 
 		// Update client's IP and Port
-		host, port, _ := net.SplitHostPort(client.Conn.RemoteAddr().String())
-		info.IP = host
-		info.Port = port
+		info.IP =  client.Addr
 
 		client.Info = info
 		fmt.Printf("Updated client info: %s -> %+v\n", client.Addr, client.Info)
+		fmt.Println(client.Info)
+		jData, _ := json.Marshal(client)
+		fmt.Println(string(jData))
 
 		jsonData, err := clientManager.GetConnectedServersInfo()
 		if err != nil {

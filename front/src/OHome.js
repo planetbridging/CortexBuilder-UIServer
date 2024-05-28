@@ -42,6 +42,7 @@ var wsUrl = "ws://" + currentHost + ":4124";
 class OHome extends React.Component {
   state = {
     ws: null,
+    lstPods: new Map(),
     lstDataPods: [],
     lstAiPods: [],
     lstPodSpecs: new Map(),
@@ -67,7 +68,20 @@ class OHome extends React.Component {
       ws.send(JSON.stringify(message));
     };
     ws.onmessage = (evt) => {
+      console.log(evt.data);
       const message = JSON.parse(evt.data);
+      console.log(message);
+      switch (message.msgType) {
+        case "fulllist":
+          console.log(message);
+          const resultMap = message.lstPods.reduce((acc, item) => {
+            acc[item.ip] = item;
+            return acc;
+          }, {});
+          this.setState({ lstPods: resultMap });
+          break;
+      }
+      /* 
       //console.log(message);
       switch (message.Type) {
         case "pong":
@@ -127,7 +141,7 @@ class OHome extends React.Component {
           //console.log("unknown message type:", message.Type);
           //console.log(message);
           this.mainMsgs(message);
-      }
+      }*/
     };
 
     ws.onclose = () => {
@@ -136,9 +150,7 @@ class OHome extends React.Component {
     this.setState({ ws: ws });
   }
 
-  async updatingDevices(msgLst,currentLst,savingName){
-
-  }
+  async updatingDevices(msgLst, currentLst, savingName) {}
 
   async refreshADataPodConfig(uuid) {
     const { lstDataPodConfigs } = this.state;
@@ -334,8 +346,7 @@ class OHome extends React.Component {
   }
 
   fixingNewSyncManuallyRebuildingAI() {
-    const { ws, lstAiPods, lstPodSpecsAi } =
-      this.state;
+    const { ws, lstAiPods, lstPodSpecsAi } = this.state;
     var lst = [];
 
     for (var tmpClientUUID in lstAiPods) {
@@ -570,7 +581,10 @@ class OHome extends React.Component {
             title: "Data caches",
             content: this.fixingNewSyncManuallyRebuilding(),
           },
-          { title: "Ai pods", content: this.fixingNewSyncManuallyRebuildingAI() },
+          {
+            title: "Ai pods",
+            content: this.fixingNewSyncManuallyRebuildingAI(),
+          },
         ])}
       </Box>
     );

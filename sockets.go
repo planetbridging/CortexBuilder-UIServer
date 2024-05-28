@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 	"sync"
-	"strings"
+	//"strings"
 	"github.com/gofiber/websocket/v2"
 )
 
@@ -75,124 +75,35 @@ func handleWebsocketConnection(c *websocket.Conn) {
 		}
 
 		switch msg.Type {
-		case "setCurrentProjectPath":
-
-			var responseData DataPodConfig
-			err := json.Unmarshal([]byte(msg.Data), &responseData)
-			if err != nil {
-				log.Println("json unmarshal data:", err)
-				break
-			}
-
-			//fmt.Println(responseData.SetProjectPath, responseData.UUID)
-
-			foundDataCache := getClientRemoteAddr(responseData.UUID)
-
-			// URL of the create file endpoint
-			url := "http://" + foundDataCache + "/createfile"
-
-			// Data to be sent in the POST request
-			postData := map[string]interface{}{
-				"Path": "/config.json", // Ensure this path is allowed by your server logic
-				"Data": "{'setProjectPath': '"+responseData.SetProjectPath+"'}",
-			}
-
-			// Send POST request
-			response, err := sendPostRequest(url, postData)
-			if err != nil {
-				fmt.Println("Error sending POST request:", err)
-			} else {
-				fmt.Println("Response from server:", response)
-			}
-
-
-			
+					
 
 		case "ping":
-			response := Message{
-				Type: "pong",
-				Data: "",
-			}
-			jsonData, err := json.Marshal(response)
+			jsonData, err := clientManager.GetConnectedServersInfo()
 			if err != nil {
-				log.Println("json marshal:", err)
-				break
-			}
-			err = c.WriteMessage(messageType, jsonData)
-			if err != nil {
-				log.Println("write:", err)
-				break
-			}
-			broadcastMessage("sysinfo", "")
-			broadcastMessageAI("sysinfo", "")
-		case "reqPathFromCache":
-			var data PathData
-			err := json.Unmarshal([]byte(msg.Data), &data)
-			if err != nil {
-				log.Println("json unmarshal data:", err)
-				break
-			}
-			fmt.Println("loading reqPathFromCache")
-			fmt.Println("Path:", data.Path)
-			fmt.Println("UUID:", data.UUID)
-			reqPathData := sendGetRequestToOneRelay(data.UUID, data.Path)
-			fmt.Println(reqPathData)
-
-			// Unmarshal the file list
-			var fileList []File
-			err = json.Unmarshal([]byte(reqPathData), &fileList)
-			if err != nil {
-				log.Println("json unmarshal fileList:", err)
-				break
+				fmt.Printf("Error getting connected servers info: %v\n", err)
+				return
 			}
 
-			// Create a ResponseData object
-			responseData := ResponseData{
-				UUID:     data.UUID,
-				Path:     data.Path,
-				Contents: fileList,
-				Type:     "reqPathFromCache",
-			}
+			fmt.Printf("Connected servers info: %s\n", jsonData)
 
-			// Marshal the ResponseData object into JSON
-			jsonData, err := json.Marshal(responseData)
-			if err != nil {
-				log.Println("json marshal:", err)
-				break
-			}
-
-			// Send the JSON data back to the client
-			err = c.WriteMessage(messageType, jsonData)
-			if err != nil {
-				log.Println("write:", err)
-				break
-			}
-			break
-		case "createFolderForCache":
-			var data ResponseDataSimple
-			err := json.Unmarshal([]byte(msg.Data), &data)
-			if err != nil {
-				log.Println("json unmarshal data:", err)
-				break
-			}
-			
-			foundDataCache := getClientRemoteAddr(data.UUID)
-
-			
-			cleanPath := data.Path
-			if strings.HasPrefix(cleanPath, "/path/") {
-				cleanPath = strings.TrimPrefix(cleanPath, "/path/")
-			}
-
-			url := "http://" + foundDataCache + "/createfolder"
+			// Use json.RawMessage to avoid double encoding
 			postData := map[string]interface{}{
-				"Path": "./"+cleanPath, // replace with your actual directory path
+				"msgType": "fulllist",
+				"lstPods": json.RawMessage(jsonData),
 			}
-			response, err := sendPostRequest(url, postData)
+
+			// Marshal the postData map to JSON byte slice
+			byteSlice, err := json.Marshal(postData)
 			if err != nil {
-				fmt.Println(err)
+				log.Fatalf("Error marshaling postData: %v", err)
 			}
-			fmt.Println(response)
+
+			
+			errSend := c.WriteMessage(messageType, byteSlice)
+			if errSend != nil {
+				log.Println("write:", errSend)
+			}
+			
 			break
 		default:
 			log.Println("unknown message type:", msg.Type)

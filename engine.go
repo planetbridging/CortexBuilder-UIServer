@@ -7,7 +7,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
-	//"github.com/gofiber/websocket/v2"
+	"github.com/gofiber/websocket/v2"
 	
 	"github.com/joho/godotenv"
 )
@@ -61,8 +61,8 @@ app.Use(customCORSHandler) // Use custom CORS before your routes or global middl
 
 	setupRoutes(app)
 
-	/*app.Use("/ws", websocket.New(handleWebsocketConnection))
-
+	app.Use("/ws", websocket.New(handleWebsocketConnection))
+	/*
 	go func() {
 		ticker := time.NewTicker(1 * time.Second)
 		defer ticker.Stop()
