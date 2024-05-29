@@ -35,20 +35,17 @@ import { ChevronDownIcon, RepeatIcon } from "@chakra-ui/icons";
 
 export class OSystemInfo extends React.Component {
   render() {
-    const { arch, cachePath, cmd, id, ip, numCPU, os, pcType, port } =
+    const { os,ram,cpu,ip} =
       this.props;
 
     return (
       <Box>
         <Flex justifyContent="space-between" mb={4}>
           <Stack>
-            <Text>ID: {id}</Text>
-            <Text>Architecture: {arch}</Text>
-            <Text>Cache Path: {cachePath}</Text>
             <Text>IP: {ip}</Text>
-            <Text>Number of CPUs: {numCPU}</Text>
             <Text>Operating System: {os}</Text>
-            <Text>Port: {port}</Text>
+            <Text>Ram: {ram}</Text>
+            <Text>CPU: {cpu}</Text>
           </Stack>
         </Flex>
       </Box>
@@ -60,7 +57,7 @@ export class OShowType extends React.Component {
   render() {
     var btnContent = <></>;
     switch (this.props.pcType) {
-      case "dataCache":
+      case "data":
         btnContent = <FaDatabase />;
         break;
       case undefined:
@@ -73,7 +70,7 @@ export class OShowType extends React.Component {
         btnContent = <p>Unknown</p>;
         break;
     }
-    return <Button>{btnContent}</Button>;
+    return btnContent;
   }
 }
 
@@ -120,7 +117,7 @@ export class OFileManager extends React.Component {
           type: "setCurrentProjectPath",
           data: JSON.stringify({
             uuid: this.props.uuid,
-            setProjectPath: this.props.podPath.path + "/" + itemName,
+            setProjectPath: this.props.podPath + "/" + itemName,
           }),
         };
         this.props.ws.send(JSON.stringify(message));
@@ -152,7 +149,7 @@ export class OFileManager extends React.Component {
     const message = {
       type: "createFolderForCache",
       data: JSON.stringify({
-        path: this.props.podPath.path + "/" + txtFolderName,
+        path: this.props.podPath + "/" + txtFolderName,
         uuid: this.props.uuid,
       }),
     };
@@ -162,8 +159,8 @@ export class OFileManager extends React.Component {
   }
 
   backBtn() {
-    if (this.props.podPath.path.includes("/")) {
-      const segments = this.props.podPath.path.split("/");
+    if (this.props.podPath.includes("/")) {
+      const segments = this.props.podPath.split("/");
       segments.pop(); // Remove the last segment
       var tmp = segments.join("/");
       this.refreshPath(tmp);
@@ -172,10 +169,14 @@ export class OFileManager extends React.Component {
 
   menuOpen(itemName, itemType) {
     if (itemType != "file") {
-      this.refreshPath(this.props.podPath.path + "/" + itemName);
+      this.refreshPath(this.props.podPath + "/" + itemName);
     }else{
-      var tmpNewPath = this.props.podPath.path.replace("/path","/files") +"/" +this.props.uuid + "/";
-      var fullPath = "http://" + this.props.currentHost  +":4124"+tmpNewPath+itemName;
+      //http://localhost:4124/files/localhost:4123/config.json
+      //http://localhost:12345:4124/files/localhost:12345/config.json'.
+      var newuuidPath = this.props.uuid.replace("12345","4123");
+      var newCurrentHost = this.props.uuid.replace(":12345","");
+      var tmpNewPath = this.props.podPath.replace("/path","/files") +"/" +newuuidPath+ "/";
+      var fullPath = "http://" + newCurrentHost +":4124"+tmpNewPath+itemName;
       window.open(fullPath, '_blank');
     }
   }
@@ -189,12 +190,12 @@ export class OFileManager extends React.Component {
         {this.props.podPath ? (
           <Box>
             <InputGroup>
-              <Button onClick={() => this.refreshPath(this.props.podPath.path)}>
+              <Button onClick={() => this.refreshPath(this.props.podPath)}>
                 <RepeatIcon />
               </Button>
               <Text mb={4} fontSize="lg" fontWeight="bold">
                 <InputGroup>
-                  <InputLeftAddon>{this.props.podPath.path}</InputLeftAddon>
+                  <InputLeftAddon>{this.props.podPath}</InputLeftAddon>
                   <Input
                     value={this.state.reqPath}
                     onChange={(e) => this.setState({ reqPath: e.target.value })}
@@ -236,9 +237,9 @@ export class OFileManager extends React.Component {
 
             {/* File System Items */}
             <Wrap gap={2}>
-              {this.props.podPath.contents ? (
+              {this.props.contents ? (
                 <>
-                  {this.props.podPath.contents.map((item, index) => (
+                  {this.props.contents.map((item, index) => (
                     <WrapItem
                       key={index}
                       align="center"

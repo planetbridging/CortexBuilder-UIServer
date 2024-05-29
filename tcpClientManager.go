@@ -16,6 +16,7 @@ type ServerInfo struct {
 	CPU          string `json:"cpu"`
 	ComputerType string `json:"computerType"`
 	IP           string `json:"ip"`
+	Config       interface{} `json:"config"`
 }
 
 type Client struct {
@@ -55,6 +56,9 @@ func (cm *ClientManager) Run() {
 }
 
 func (cm *ClientManager) AddClient(client *Client) {
+	//fmt.Println("-----------------",client.Addr)
+	//get, _ := sendGetRequest("http://" + ip + ":" + port + "/path")
+
 	cm.addClientChan <- client
 }
 
@@ -117,13 +121,13 @@ func (cm *ClientManager) handleConnection(client *Client) {
 			fmt.Printf("Error unmarshaling JSON: %v\n", err)
 			continue
 		}
-
+		
 		// Update client's IP and Port
 		info.IP =  client.Addr
 
 		client.Info = info
-		fmt.Printf("Updated client info: %s -> %+v\n", client.Addr, client.Info)
-		fmt.Println(client.Info)
+		//fmt.Printf("Updated client info: %s -> %+v\n", client.Addr, client.Info)
+		/*fmt.Println(client.Info)
 		jData, _ := json.Marshal(client)
 		fmt.Println(string(jData))
 
@@ -132,6 +136,24 @@ func (cm *ClientManager) handleConnection(client *Client) {
 			fmt.Printf("Error getting connected servers info: %v\n", err)
 		} else {
 			fmt.Printf("Connected servers info: %s\n", jsonData)
+		}*/
+		//fmt.Println("-----------------",info.ComputerType)
+		switch info.ComputerType {
+			case "data":
+				getConfigLocation := strings.ReplaceAll(client.Addr, "12345", "4123")
+				getConfig, err := sendGetRequest("http://" + getConfigLocation + "/files/config.json")
+				if err != nil {
+					fmt.Printf("Error fetching config: %v\n", err)
+				} else {
+					var configData interface{}
+					err := json.Unmarshal([]byte(getConfig), &configData)
+					if err != nil {
+						configData = getConfig // If unmarshaling fails, store as string
+					}
+					info.Config = configData // Save the fetched config
+					//fmt.Println("Config:", configData)
+					client.Info = info
+				}
 		}
 	}
 }
@@ -182,4 +204,9 @@ func (cm *ClientManager) GetConnectedServersInfo() (string, error) {
 	}
 
 	return string(jsonData), nil
+}
+
+func (cm *ClientManager) IsClientConnected(addr string) bool {
+	_, exists := cm.Clients[addr]
+	return exists
 }

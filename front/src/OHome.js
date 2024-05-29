@@ -17,6 +17,7 @@ import {
   AccordionButton,
   AccordionPanel,
   AccordionIcon,
+  ButtonGroup,
 } from "@chakra-ui/react";
 import React from "react";
 import { FaComputer } from "react-icons/fa6";
@@ -34,6 +35,7 @@ import {
 import logo from "./imgs/logo.jpg";
 import bg from "./imgs/bg.jpg";
 import OAi from "./OAi";
+import { changeKey } from "./jsonHelper";
 
 var currentHost = window.location.hostname;
 
@@ -43,6 +45,7 @@ class OHome extends React.Component {
   state = {
     ws: null,
     lstPods: new Map(),
+    reqPathFromCache: {},
     lstDataPods: [],
     lstAiPods: [],
     lstPodSpecs: new Map(),
@@ -69,16 +72,22 @@ class OHome extends React.Component {
     };
     ws.onmessage = (evt) => {
       console.log(evt.data);
-      const message = JSON.parse(evt.data);
-      console.log(message);
+      var message = JSON.parse(evt.data);
+      
+      message = changeKey(message, "type", "msgType");
+
       switch (message.msgType) {
         case "fulllist":
           console.log(message);
-          const resultMap = message.lstPods.reduce((acc, item) => {
-            acc[item.ip] = item;
-            return acc;
-          }, {});
+          const resultMap = new Map(
+            message.lstPods.map((item) => [item.ip, item])
+          );
+          console.log(resultMap);
           this.setState({ lstPods: resultMap });
+          break;
+        case "reqPathFromCache":
+          delete message.uuid;
+          this.setState({ reqPathFromCache: message });
           break;
       }
       /* 
@@ -154,13 +163,14 @@ class OHome extends React.Component {
 
   async refreshADataPodConfig(uuid) {
     const { lstDataPodConfigs } = this.state;
-
+    console.log(uuid);
     try {
+      var newPort = uuid.replace("12345","4123");
       var configUrlPath =
-        "http://" + currentHost + ":4124/files/" + uuid + "/config.json";
+        "http://" + currentHost + ":4124/files/" + newPort + "/config.json";
       var configDataReq = await axios.get(configUrlPath);
       var configData = configDataReq.data;
-
+      console.log(configData);
       lstDataPodConfigs.set(uuid, configData);
       console.log("--------new data pod config-------");
       console.log(lstDataPodConfigs);
@@ -511,6 +521,8 @@ class OHome extends React.Component {
     );
   }
 
+
+
   customAccordion(items) {
     if (!items || !Array.isArray(items)) {
       return null;
@@ -559,6 +571,59 @@ class OHome extends React.Component {
     );
   }
 
+  renderAllPods() {
+    const { lstPods, ws,reqPathFromCache } = this.state;
+    // Convert the Map to an array of [key, value] pairs
+    console.log(reqPathFromCache);
+    var lst = Array.from(lstPods.entries()).map(([key, item], index) => (
+      <WrapItem key={index}>
+        <Card>
+          <CardHeader>
+            <ButtonGroup>
+              <ODrawer
+                header={"Specs"}
+                btnSize={"sm"}
+                btnOpenText={<OShowType pcType={item.computerType} />}
+                content={
+                  <OSystemInfo
+                    ip={key}
+                    os={item.os}
+                    ram={item.ram}
+                    cpu={item.cpu}
+                  />
+                }
+              />
+              <Text>{key}</Text>
+            </ButtonGroup>
+          </CardHeader>
+          <CardBody></CardBody>
+          <CardFooter>
+            {item.computerType == "data" ? (
+              <ODrawer
+                header={"System info"}
+                content={
+                  <OFileManager
+                    ws={ws}
+                    uuid={key}
+                    podPath={reqPathFromCache.path}
+                    podConfig={item.config}
+                    refreshADataPodConfig={this.refreshADataPodConfig}
+                    currentHost={key}
+                    contents={reqPathFromCache.contents}
+                  />
+                }
+                btnOpenText={"idk"}
+                btnSize={"sm"}
+                placement={"top"}
+              />
+            ) : null}
+          </CardFooter>
+        </Card>
+      </WrapItem>
+    ));
+    return <Wrap>{lst}</Wrap>;
+  }
+
   render() {
     const { ws, lstPodPath, lstDataPods, lstPodSpecs } = this.state;
     console.log(lstDataPods);
@@ -576,16 +641,7 @@ class OHome extends React.Component {
           </Button>
         </Box>
 
-        {this.customAccordion([
-          {
-            title: "Data caches",
-            content: this.fixingNewSyncManuallyRebuilding(),
-          },
-          {
-            title: "Ai pods",
-            content: this.fixingNewSyncManuallyRebuildingAI(),
-          },
-        ])}
+        {this.renderAllPods()}
       </Box>
     );
   }

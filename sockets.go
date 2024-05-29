@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 	"sync"
-	//"strings"
+	"strings"
 	"github.com/gofiber/websocket/v2"
 )
 
@@ -105,8 +105,84 @@ func handleWebsocketConnection(c *websocket.Conn) {
 			}
 			
 			break
+		case "reqPathFromCache":
+			var data PathData
+			err := json.Unmarshal([]byte(msg.Data), &data)
+			if err != nil {
+				log.Println("json unmarshal data:", err)
+				break
+			}
+			fmt.Println("loading reqPathFromCache")
+			fmt.Println("Path:", data.Path)
+			fmt.Println("UUID:", data.UUID)
+			newPath := strings.ReplaceAll(data.UUID, "12345", "4123")
+
+			sendGetReq, _ := sendGetRequest("http://" + newPath + data.Path)
+			
+			
+
+			// Unmarshal the file list
+			var fileList []File
+			err = json.Unmarshal([]byte(sendGetReq), &fileList)
+			if err != nil {
+				log.Println("json unmarshal fileList:", err)
+				break
+			}
+
+			// Create a ResponseData object
+			responseData := ResponseData{
+				UUID:     newPath,
+				Path:     data.Path,
+				Contents: fileList,
+				Type:     "reqPathFromCache",
+			}
+
+			// Marshal the ResponseData object into JSON
+			jsonData, err := json.Marshal(responseData)
+			if err != nil {
+				log.Println("json marshal:", err)
+				break
+			}
+
+			// Send the JSON data back to the client
+			err = c.WriteMessage(messageType, jsonData)
+			if err != nil {
+				log.Println("write:", err)
+				break
+			}
+			break
+		case "setCurrentProjectPath":
+
+			var responseData DataPodConfig
+			err := json.Unmarshal([]byte(msg.Data), &responseData)
+			if err != nil {
+				log.Println("json unmarshal data:", err)
+				break
+			}
+
+			//fmt.Println(responseData.SetProjectPath, responseData.UUID)
+
+			newPath := strings.ReplaceAll(responseData.UUID, "12345", "4123")
+
+			// URL of the create file endpoint
+			url := "http://" + newPath + "/createfile"
+
+			// Data to be sent in the POST request
+			postData := map[string]interface{}{
+				"Path": "/config.json", // Ensure this path is allowed by your server logic
+				"Data": "{'setProjectPath': '"+responseData.SetProjectPath+"'}",
+			}
+
+			// Send POST request
+			response, err := sendPostRequest(url, postData)
+			if err != nil {
+				fmt.Println("Error sending POST request:", err)
+			} else {
+				fmt.Println("Response from server:", response)
+			}
 		default:
 			log.Println("unknown message type:", msg.Type)
+			log.Println(msg)
 		}
 	}
 }

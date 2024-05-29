@@ -31,20 +31,20 @@ func reverseProxyHandler(c *fiber.Ctx) error {
     //log.Printf("UUID: %s, File Path: %s\n", uuid, filePath)
 
     // Get the remote address (IP:port) for the given UUID
-    serverAddress := getClientRemoteAddr(uuid)
+    foundConnection := clientManager.IsClientConnected(uuid)
     //log.Println("Original server address:", serverAddress)
-    if serverAddress == "" {
+    if uuid == "" && !foundConnection{
         return c.Status(fiber.StatusNotFound).SendString("Server not found for UUID")
     }
 
     // Check if the address is IPv6 localhost ([::1]), and convert it to IPv4 localhost (127.0.0.1)
-    host, port, err := net.SplitHostPort(serverAddress)
+    host, port, err := net.SplitHostPort(uuid)
     if err != nil {
         log.Println("Error splitting host and port:", err)
         return c.Status(fiber.StatusInternalServerError).SendString("Invalid server address")
     }
     if host == "::1" {
-        serverAddress = "127.0.0.1:" + port
+        uuid = "127.0.0.1:" + port
     }
     log.Println(host);
 
@@ -54,7 +54,7 @@ func reverseProxyHandler(c *fiber.Ctx) error {
     c.Request().SetRequestURI("/files/" + filePath)
 
     // Use fasthttp.HostClient to proxy the request
-    client := &fasthttp.HostClient{Addr: serverAddress}
+    client := &fasthttp.HostClient{Addr: uuid}
     err = client.Do(c.Request(), c.Response())
     if err != nil {
         log.Printf("Proxy error: %v\n", err)
