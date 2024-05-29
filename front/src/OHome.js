@@ -608,7 +608,7 @@ class OHome extends React.Component {
                     podPath={reqPathFromCache.path}
                     podConfig={item.config}
                     refreshADataPodConfig={this.refreshADataPodConfig}
-                    currentHost={key}
+                    currentHost={currentHost}
                     contents={reqPathFromCache.contents}
                   />
                 }
