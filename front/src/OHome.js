@@ -81,6 +81,14 @@ class OHome extends React.Component {
       switch (message.msgType) {
         case "fulllist":
           console.log(message);
+
+          for(var i in message.lstPods){
+           // console.log(message.lstPods[i].config);
+            try{
+              message.lstPods[i].config = JSON.parse(message[i].config);
+            }catch{}
+          }
+
           const resultMap = new Map(
             message.lstPods.map((item) => [item.ip, item])
           );
