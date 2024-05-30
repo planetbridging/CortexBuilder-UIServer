@@ -25,6 +25,7 @@ import axios from "axios";
 import { MinusIcon, AddIcon } from "@chakra-ui/icons";
 
 import { FaFolder } from "react-icons/fa";
+import { PiStepsFill } from "react-icons/pi";
 
 import {
   ODrawer,
@@ -82,11 +83,11 @@ class OHome extends React.Component {
         case "fulllist":
           console.log(message);
 
-          for(var i in message.lstPods){
-           // console.log(message.lstPods[i].config);
-            try{
+          for (var i in message.lstPods) {
+            // console.log(message.lstPods[i].config);
+            try {
               message.lstPods[i].config = JSON.parse(message[i].config);
-            }catch{}
+            } catch {}
           }
 
           const resultMap = new Map(
@@ -100,67 +101,6 @@ class OHome extends React.Component {
           this.setState({ reqPathFromCache: message });
           break;
       }
-      /* 
-      //console.log(message);
-      switch (message.Type) {
-        case "pong":
-          console.log("received pong");
-          break;
-        case "getClients":
-          //console.log(message);
-          // Parse new client data
-          const lstDataPods = JSON.parse(message.lstDataCache);
-
-          const dataPodsMap = lstDataPods.reduce((acc, client) => {
-            acc.set(client.uuid, client);
-            return acc;
-          }, new Map());
-
-          const currentLstDataPods = this.state.lstDataPods.reduce(
-            (acc, client) => {
-              acc.set(client.uuid, client);
-              return acc;
-            },
-            new Map()
-          );
-
-          var lstCurrent = this.state.lstDataPods;
-          var changeFound = false;
-
-          for (const [key, value] of dataPodsMap.entries()) {
-            if (!currentLstDataPods.has(key)) {
-              lstCurrent.push(value);
-              changeFound = true;
-            }
-          }
-
-          for (var i in lstCurrent) {
-            if (!dataPodsMap.has(lstCurrent[i].uuid)) {
-              lstCurrent.splice(i, 1);
-              changeFound = true;
-            }
-          }
-
-          if(changeFound){
-            const message = {
-              type: "ping",
-              data: "",
-            };
-            ws.send(JSON.stringify(message));
-          }
-
-          if (changeFound) {
-            this.setState({
-              lstDataPods: lstCurrent,
-            });
-          }
-
-          break;
-        default:
-          //console.log("unknown message type:", message.Type);
-          //console.log(message);
-          this.mainMsgs(message);
-      }*/
     };
 
     ws.onclose = () => {
@@ -168,8 +108,6 @@ class OHome extends React.Component {
     };
     this.setState({ ws: ws });
   }
-
-  async updatingDevices(msgLst, currentLst, savingName) {}
 
   async refreshADataPodConfig(uuid) {
     const { lstDataPodConfigs } = this.state;
@@ -250,7 +188,15 @@ class OHome extends React.Component {
                 btnSize={"sm"}
                 placement={"top"}
               />
-            ) : null}
+            ) : (
+              <ODrawer
+                header={"AI - " + item.ip}
+                content={<OAi ip={item.ip} lstPods={lstPods} />}
+                btnOpenText={<PiStepsFill />}
+                btnSize={"sm"}
+                placement={"top"}
+              />
+            )}
           </CardFooter>
         </Card>
       </WrapItem>

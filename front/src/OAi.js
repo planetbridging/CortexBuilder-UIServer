@@ -1,76 +1,134 @@
-import { Button, ButtonGroup, Stack, Text } from "@chakra-ui/react";
+import {
+  Button,
+  ButtonGroup,
+  Stack,
+  Text,
+  Wrap,
+  WrapItem,
+  Box,
+  Accordion,
+  AccordionItem,
+  AccordionButton,
+  AccordionPanel,
+} from "@chakra-ui/react";
 import React from "react";
 import { RepeatIcon } from "@chakra-ui/icons";
 
 class OAi extends React.Component {
   state = {
-    setProjectPath: "",
+    selectedProject: null,
   };
 
-  static getDerivedStateFromProps(nextProps, prevState) {
-    let parsedConfig = nextProps.podConfig;
-    if (typeof nextProps.podConfig === "string") {
-      try {
-        parsedConfig = JSON.parse(nextProps.podConfig.replace(/'/g, '"'));
-      } catch (error) {
-        console.error("Failed to parse podConfig:", nextProps.podConfig, error);
-      }
-    }
+  handleSelect = (project) => {
+    this.setState({ selectedProject: project });
+  };
 
-    if (
-      parsedConfig &&
-      parsedConfig.setProjectPath !== prevState.setProjectPath
-    ) {
-      return {
-        setProjectPath: parsedConfig.setProjectPath,
-      };
-    }
-    return null;
-  }
+  showCurrentProjects() {
+    const { lstPods } = this.props;
+    const podsArray = Array.from(lstPods.values());
 
-  componentDidUpdate(prevProps) {
-    // Check if the podConfig prop has changed
-    if (prevProps.podConfig != this.props.podConfig) {
-      let parsedConfig = this.props.podConfig;
-      // Parse podConfig if it's a string
-      if (typeof this.props.podConfig === "string") {
-        try {
-          parsedConfig = JSON.parse(this.props.podConfig.replace(/'/g, '"'));
-        } catch (error) {
-          console.error(
-            "Failed to parse podConfig:",
-            this.props.podConfig,
-            error
-          );
-        }
-      }
-
-      // Update state with the new setProjectPath if it's different
-      if (
-        parsedConfig &&
-        parsedConfig.setProjectPath !== this.state.setProjectPath
-      ) {
-        this.setState({ setProjectPath: parsedConfig.setProjectPath });
-      }
-    }
+    return (
+      <Wrap>
+        {podsArray
+          .filter(
+            (pod) =>
+              pod.computerType === "data" &&
+              pod.config &&
+              pod.config.setProjectPath
+          )
+          .map((pod, index) => (
+            <WrapItem key={index}>
+              <Box
+                bg={
+                  this.state.selectedProject === pod.computerType
+                    ? "teal.500"
+                    : "gray.200"
+                }
+                p="10px"
+                onClick={() => this.handleSelect(pod.computerType)}
+              >
+                {pod.ip}
+                <Box mt="10px">Project Path: {pod.config.setProjectPath}</Box>
+              </Box>
+            </WrapItem>
+          ))}
+      </Wrap>
+    );
   }
 
   render() {
-    const { setProjectPath } = this.state;
     //console.log(this.props.podConfig, this.props.podConfig?.setProjectPath);
     return (
       <Stack bg="white">
-        <Text>{this.props.podSpec.ip}</Text>
-        <ButtonGroup>
-          
-        <Button
-          onClick={() => this.props.refreshADataPodConfig(this.props.uuid)}
-        >
-          <RepeatIcon />
-        </Button>
-        <Text> {setProjectPath}</Text>
-        </ButtonGroup>
-      
+        <Box overflowY="auto" maxH="90vh">
+          <Stack>
+            {this.showCurrentProjects()}
+            <Accordion allowToggle>
+              <AccordionItem>
+                <AccordionButton>Genome Representation</AccordionButton>
+                <AccordionPanel>
+                  <Text>
+                    Feed forward neural network (testing and development)
+                  </Text>
+                </AccordionPanel>
+              </AccordionItem>
+              <AccordionItem>
+                <AccordionButton>Population Initialization</AccordionButton>
+                <AccordionPanel>
+                  {/* Population Initialization settings go here */}
+                </AccordionPanel>
+              </AccordionItem>
+              <AccordionItem>
+                <AccordionButton>Fitness Evaluation</AccordionButton>
+                <AccordionPanel>
+                  {/* Fitness Evaluation settings go here */}
+                </AccordionPanel>
+              </AccordionItem>
+              <AccordionItem>
+                <AccordionButton>Selection</AccordionButton>
+                <AccordionPanel>
+                  {/* Selection settings go here */}
+                </AccordionPanel>
+              </AccordionItem>
+              <AccordionItem>
+                <AccordionButton>Crossover (Recombination)</AccordionButton>
+                <AccordionPanel>
+                  {/* Crossover settings go here */}
+                </AccordionPanel>
+              </AccordionItem>
+              <AccordionItem>
+                <AccordionButton>Mutation</AccordionButton>
+                <AccordionPanel>
+                  {/* Mutation settings go here */}
+                </AccordionPanel>
+              </AccordionItem>
+              <AccordionItem>
+                <AccordionButton>Speciation</AccordionButton>
+                <AccordionPanel>
+                  {/* Speciation settings go here */}
+                </AccordionPanel>
+              </AccordionItem>
+              <AccordionItem>
+                <AccordionButton>Reproduction</AccordionButton>
+                <AccordionPanel>
+                  {/* Reproduction settings go here */}
+                </AccordionPanel>
+              </AccordionItem>
+              <AccordionItem>
+                <AccordionButton>Parameter Settings</AccordionButton>
+                <AccordionPanel>
+                  {/* Parameter Settings go here */}
+                </AccordionPanel>
+              </AccordionItem>
+              <AccordionItem>
+                <AccordionButton>Termination</AccordionButton>
+                <AccordionPanel>
+                  {/* Termination settings go here */}
+                </AccordionPanel>
+              </AccordionItem>
+            </Accordion>
+          </Stack>
+        </Box>
       </Stack>
     );
   }

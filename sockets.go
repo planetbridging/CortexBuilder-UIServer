@@ -4,8 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"sync"
 	"strings"
+	"sync"
+
 	"github.com/gofiber/websocket/v2"
 )
 
@@ -33,14 +34,14 @@ type ResponseData struct {
 }
 
 type ResponseDataSimple struct {
-	UUID     string `json:"uuid"`
-	Path     string `json:"path"`
-	Type     string `json:"type"`
+	UUID string `json:"uuid"`
+	Path string `json:"path"`
+	Type string `json:"type"`
 }
 
 type DataPodConfig struct {
-	UUID     string `json:"uuid"`
-	SetProjectPath     string `json:"setProjectPath"`
+	UUID           string `json:"uuid"`
+	SetProjectPath string `json:"setProjectPath"`
 }
 
 var (
@@ -75,7 +76,6 @@ func handleWebsocketConnection(c *websocket.Conn) {
 		}
 
 		switch msg.Type {
-					
 
 		case "ping":
 			jsonData, err := clientManager.GetConnectedServersInfo()
@@ -98,12 +98,11 @@ func handleWebsocketConnection(c *websocket.Conn) {
 				log.Fatalf("Error marshaling postData: %v", err)
 			}
 
-			
 			errSend := c.WriteMessage(messageType, byteSlice)
 			if errSend != nil {
 				log.Println("write:", errSend)
 			}
-			
+
 			break
 		case "reqPathFromCache":
 			var data PathData
@@ -118,8 +117,6 @@ func handleWebsocketConnection(c *websocket.Conn) {
 			newPath := strings.ReplaceAll(data.UUID, "12345", "4123")
 
 			sendGetReq, _ := sendGetRequest("http://" + newPath + data.Path)
-			
-			
 
 			// Unmarshal the file list
 			var fileList []File
@@ -181,6 +178,31 @@ func handleWebsocketConnection(c *websocket.Conn) {
 				fmt.Println("Response from server:", response)
 			}
 			clientManager.RenewAllConfigs()
+		case "createFolderForCache":
+			var data ResponseDataSimple
+			err := json.Unmarshal([]byte(msg.Data), &data)
+			if err != nil {
+				log.Println("json unmarshal data:", err)
+				break
+			}
+
+			newPath := strings.ReplaceAll(data.UUID, "12345", "4123")
+
+			cleanPath := data.Path
+			if strings.HasPrefix(cleanPath, "/path/") {
+				cleanPath = strings.TrimPrefix(cleanPath, "/path/")
+			}
+
+			url := "http://" + newPath + "/createfolder"
+			postData := map[string]interface{}{
+				"Path": "./" + cleanPath, // replace with your actual directory path
+			}
+			response, err := sendPostRequest(url, postData)
+			if err != nil {
+				fmt.Println(err)
+			}
+			fmt.Println(response)
+			break
 		default:
 			log.Println("unknown message type:", msg.Type)
 			log.Println(msg)
@@ -194,11 +216,11 @@ func sendClientsInfo() {
 	//fmt.Println(clientsInfo)
 
 	response := struct {
-		LstAiPods string `json:"lstAiPods"` 
-		LstDataCache string `json:"lstDataCache"`  
+		LstAiPods    string `json:"lstAiPods"`
+		LstDataCache string `json:"lstDataCache"`
 		Type         string `json:type"`
 	}{
-		LstAiPods: clientsInfoAI,
+		LstAiPods:    clientsInfoAI,
 		LstDataCache: clientsInfo,
 		Type:         "getClients",
 	}
