@@ -210,3 +210,24 @@ func (cm *ClientManager) IsClientConnected(addr string) bool {
 	_, exists := cm.Clients[addr]
 	return exists
 }
+
+func (cm *ClientManager) RenewAllConfigs() {
+	for _, client := range cm.Clients {
+		switch client.Info.ComputerType {
+		case "data":
+			getConfigLocation := strings.ReplaceAll(client.Addr, "12345", "4123")
+			getConfig, err := sendGetRequest("http://" + getConfigLocation + "/files/config.json")
+			if err != nil {
+				fmt.Printf("Error fetching config for client %s: %v\n", client.Addr, err)
+			} else {
+				var configData interface{}
+				err := json.Unmarshal([]byte(getConfig), &configData)
+				if err != nil {
+					configData = getConfig
+				}
+				client.Info.Config = configData
+				fmt.Printf("Updated config for client %s: %v\n", client.Addr, client.Info.Config)
+			}
+		}
+	}
+}

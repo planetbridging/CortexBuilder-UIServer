@@ -169,8 +169,8 @@ func handleWebsocketConnection(c *websocket.Conn) {
 
 			// Data to be sent in the POST request
 			postData := map[string]interface{}{
-				"Path": "/config.json", // Ensure this path is allowed by your server logic
-				"Data": "{'setProjectPath': '"+responseData.SetProjectPath+"'}",
+				"Path": "/config.json",
+				"Data": fmt.Sprintf("{\"setProjectPath\": \"%s\"}", responseData.SetProjectPath),
 			}
 
 			// Send POST request
@@ -180,6 +180,7 @@ func handleWebsocketConnection(c *websocket.Conn) {
 			} else {
 				fmt.Println("Response from server:", response)
 			}
+			clientManager.RenewAllConfigs()
 		default:
 			log.Println("unknown message type:", msg.Type)
 			log.Println(msg)

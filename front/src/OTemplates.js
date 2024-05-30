@@ -32,6 +32,7 @@ import { FaDatabase } from "react-icons/fa6";
 import { FaFolder } from "react-icons/fa";
 import { FiFolder, FiFileText } from "react-icons/fi";
 import { ChevronDownIcon, RepeatIcon } from "@chakra-ui/icons";
+import { FaProjectDiagram } from "react-icons/fa";
 
 export class OSystemInfo extends React.Component {
   render() {
@@ -59,6 +60,9 @@ export class OShowType extends React.Component {
     switch (this.props.pcType) {
       case "data":
         btnContent = <FaDatabase />;
+        break;
+      case "ai":
+        btnContent = <FaProjectDiagram/>
         break;
       case undefined:
         btnContent = <p>undefined</p>;
