@@ -231,3 +231,23 @@ func (cm *ClientManager) RenewAllConfigs() {
 		}
 	}
 }
+
+
+func (cm *ClientManager) SendJSONData(addr string, data interface{}) string {
+	client, ok := cm.Clients[addr]
+	if !ok {
+		return "Client not found"
+	}
+
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		return fmt.Sprintf("Error marshaling JSON: %v", err)
+	}
+
+	_, err = client.Conn.Write(jsonData)
+	if err != nil {
+		return fmt.Sprintf("Error sending data: %v", err)
+	}
+
+	return "Data sent successfully"
+}

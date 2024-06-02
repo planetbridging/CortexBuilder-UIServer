@@ -191,7 +191,7 @@ class OHome extends React.Component {
             ) : (
               <ODrawer
                 header={"AI - " + item.ip}
-                content={<OAi ip={item.ip} lstPods={lstPods} />}
+                content={<OAi ip={item.ip} lstPods={lstPods} ws={this.state.ws}/>}
                 btnOpenText={<PiStepsFill />}
                 btnSize={"sm"}
                 placement={"top"}

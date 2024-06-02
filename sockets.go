@@ -44,15 +44,23 @@ type DataPodConfig struct {
 	SetProjectPath string `json:"setProjectPath"`
 }
 
+type InitializationPopulation struct {
+	Path string `json:"path"`
+	Ip string `json:"ip"`
+	Amount int `json:"amount"`
+	AiPod string `json:aiPod`
+}
+
 var (
-	clients   = make(map[*websocket.Conn]bool) // stores all active clients
+	clients   = make(map[*websocket.Conn]string) // stores all active clients
 	clientsMu sync.Mutex                       // ensures that updates to the clients map are thread-safe
 )
 
 func handleWebsocketConnection(c *websocket.Conn) {
 	// Add this connection to the clients map when a new client connects
+	clientID := c.RemoteAddr().String()
 	clientsMu.Lock()
-	clients[c] = true
+	clients[c] = clientID
 	clientsMu.Unlock()
 
 	for {
@@ -203,6 +211,35 @@ func handleWebsocketConnection(c *websocket.Conn) {
 			}
 			fmt.Println(response)
 			break
+
+		case "initializationPopulation":
+			/*type InitializationPopulation struct {
+				Path string `json:"path"`
+				Ip string `json:"ip"`
+				Amount int `json:"amount"`
+			}*/
+			var data InitializationPopulation
+			err := json.Unmarshal([]byte(msg.Data), &data)
+			if err != nil {
+				log.Println("json unmarshal data:", err)
+				break
+			}
+			fmt.Println(data)
+
+			dataAi := map[string]interface{}{
+				"clientID": clientID,
+				"path": data.Path,
+				"amount": data.Amount,
+				"dataCache": data.Ip,
+				"type": "initializationPopulation",
+			}
+			clientManager.SendJSONData(data.AiPod, dataAi) 
+			/*message := sendJSONDataToClient(clientID, dataAi)
+			fmt.Println(message)*/
+
+			
+			
+			break
 		default:
 			log.Println("unknown message type:", msg.Type)
 			log.Println(msg)
@@ -287,4 +324,32 @@ func sendClientsInfoManually(c *websocket.Conn) {
 	if err != nil {
 		log.Println("write:", err)
 	}
+}
+
+
+func sendJSONDataToClient(clientID string, data interface{}) string {
+	clientsMu.Lock()
+	var c *websocket.Conn
+	for conn, id := range clients {
+		if id == clientID {
+			c = conn
+			break
+		}
+	}
+	clientsMu.Unlock()
+	if c == nil {
+		return fmt.Sprintf("Client %s not found", clientID)
+	}
+
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		return fmt.Sprintf("Error marshaling JSON: %v", err)
+	}
+
+	err = c.WriteMessage(websocket.TextMessage, jsonData)
+	if err != nil {
+		return fmt.Sprintf("Error sending data: %v", err)
+	}
+
+	return "Data sent successfully"
 }
