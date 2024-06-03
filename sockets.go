@@ -113,7 +113,7 @@ func handleWebsocketConnection(c *websocket.Conn) {
 
 			break
 		case "reqPathFromCache":
-			var data PathData
+			/*var data PathData
 			err := json.Unmarshal([]byte(msg.Data), &data)
 			if err != nil {
 				log.Println("json unmarshal data:", err)
@@ -154,7 +154,9 @@ func handleWebsocketConnection(c *websocket.Conn) {
 			if err != nil {
 				log.Println("write:", err)
 				break
-			}
+			}*/
+			processPathRequestMessage(msg, c, "reqPathFromCache",messageType)
+
 			break
 		case "setCurrentProjectPath":
 
