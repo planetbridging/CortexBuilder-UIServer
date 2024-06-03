@@ -178,8 +178,9 @@ export class OFileManager extends React.Component {
       //http://localhost:4124/files/localhost:4123/config.json
       //http://localhost:12345:4124/files/localhost:12345/config.json'.
       var newuuidPath = this.props.uuid.replace("12345","4123");
-      var tmpNewPath = this.props.podPath.replace("/path","/files") +"/" +newuuidPath+ "/";
-      var fullPath = "http://" + this.props.currentHost +":4124"+tmpNewPath+itemName;
+      var tmpNewPath = this.props.podPath.replace("/path","");
+      var fullPath = "http://" + this.props.currentHost + ":4124/files/" + newuuidPath + tmpNewPath + "/" + itemName;
+      //console.log(fullPath);
       window.open(fullPath, '_blank');
     }
   }
