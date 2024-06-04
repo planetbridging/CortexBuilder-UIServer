@@ -49,6 +49,7 @@ class OHome extends React.Component {
     ws: null,
     lstPods: new Map(),
     reqPathFromCache: {},
+    reqPathFromCacheForBeforeMounting: {},
     lstDataPods: [],
     lstAiPods: [],
     lstPodSpecs: new Map(),
@@ -100,6 +101,10 @@ class OHome extends React.Component {
           delete message.uuid;
           this.setState({ reqPathFromCache: message });
           break;
+        case "reqPathFromCacheForBeforeMounting":
+          delete message.uuid;
+          this.setState({ reqPathFromCacheForBeforeMounting: message });
+          break;
       }
     };
 
@@ -137,10 +142,12 @@ class OHome extends React.Component {
   }
 
   renderAllPods() {
-    const { lstPods, ws, reqPathFromCache } = this.state;
+    const { lstPods, ws, reqPathFromCache, reqPathFromCacheForBeforeMounting } =
+      this.state;
     // Convert the Map to an array of [key, value] pairs
     console.log(reqPathFromCache);
     console.log(lstPods);
+    console.log(reqPathFromCacheForBeforeMounting);
     var lst = Array.from(lstPods.entries()).map(([key, item], index) => (
       <WrapItem key={index}>
         <Card>
@@ -191,7 +198,16 @@ class OHome extends React.Component {
             ) : (
               <ODrawer
                 header={"AI - " + item.ip}
-                content={<OAi ip={item.ip} lstPods={lstPods} ws={this.state.ws}/>}
+                content={
+                  <OAi
+                    ip={item.ip}
+                    lstPods={lstPods}
+                    ws={this.state.ws}
+                    reqPathFromCacheForBeforeMounting={
+                      reqPathFromCacheForBeforeMounting
+                    }
+                  />
+                }
                 btnOpenText={<PiStepsFill />}
                 btnSize={"sm"}
                 placement={"top"}

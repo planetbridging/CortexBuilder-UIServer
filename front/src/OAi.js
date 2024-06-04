@@ -32,6 +32,7 @@ class OAi extends React.Component {
 
   handleSelect = (project, pod) => {
     console.log("selected computer", pod);
+    this.refreshPath(project,pod.ip);
     this.setState({ selectedProject: project, selectedComputer: pod.ip });
   };
 
@@ -99,8 +100,20 @@ class OAi extends React.Component {
     }
   }
 
+  refreshPath(project,podIp) {
+    const message = {
+      type: "reqPathFromCacheForBeforeMounting",
+      data: JSON.stringify({
+        path: project,
+        uuid: podIp,
+      }),
+    };
+    this.props.ws.send(JSON.stringify(message));
+  }
+
   render() {
     const { selectedComputer, selectedProject } = this.state;
+    console.log(this.props.reqPathFromCacheForBeforeMounting);
     //console.log(this.props.podConfig, this.props.podConfig?.setProjectPath);
     return (
       <Stack bg="white">
@@ -160,9 +173,9 @@ class OAi extends React.Component {
             </Flex>
             <Tabs isFitted variant="enclosed">
               <TabList mb="1em">
-                <Tab>Select Path</Tab>
-                <Tab>AI Manual Control panel</Tab>
-                <Tab>Mounted</Tab>
+                <Tab>Select & Mounting</Tab>
+                <Tab>AI Manual Control Panel</Tab>
+                <Tab>Random Mutation Hill Climbing (RMHC)</Tab>
               </TabList>
               <TabPanels>
                 <TabPanel>{this.showCurrentProjects()}</TabPanel>
@@ -254,7 +267,7 @@ class OAi extends React.Component {
                   </Accordion>
                 </TabPanel>
                 <TabPanel>
-                  <p>placeholder for mounting models interface</p>
+                  <p>Placeholder to build simple Random Mutation Hill Climbing (RMHC) then move on to NEAT/GA</p>
                 </TabPanel>
               </TabPanels>
             </Tabs>
