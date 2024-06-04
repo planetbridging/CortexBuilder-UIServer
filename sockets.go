@@ -161,6 +161,9 @@ func handleWebsocketConnection(c *websocket.Conn) {
 		case "reqPathFromCacheForBeforeMounting":
 			processPathRequestMessage(msg, c, "reqPathFromCacheForBeforeMounting",messageType)
 			break
+		case "reqPathFromCacheForBeforeMountingShowingSelectedGeneration":
+			processPathRequestMessage(msg, c, "reqPathFromCacheForBeforeMountingShowingSelectedGeneration",messageType)
+			break
 		case "setCurrentProjectPath":
 
 			var responseData DataPodConfig

@@ -27,13 +27,8 @@ import { MinusIcon, AddIcon } from "@chakra-ui/icons";
 import { FaFolder } from "react-icons/fa";
 import { PiStepsFill } from "react-icons/pi";
 
-import {
-  ODrawer,
-  OFileManager,
-  OFunction,
-  OShowType,
-  OSystemInfo,
-} from "./OTemplates";
+import { ODrawer, OFunction, OShowType, OSystemInfo } from "./OTemplates";
+import { OFileManager } from "./OFileManagers";
 
 import logo from "./imgs/logo.jpg";
 import bg from "./imgs/bg.jpg";
@@ -50,6 +45,7 @@ class OHome extends React.Component {
     lstPods: new Map(),
     reqPathFromCache: {},
     reqPathFromCacheForBeforeMounting: {},
+    reqPathFromCacheForBeforeMountingShowingSelectedGeneration: {},
     lstDataPods: [],
     lstAiPods: [],
     lstPodSpecs: new Map(),
@@ -105,6 +101,12 @@ class OHome extends React.Component {
           delete message.uuid;
           this.setState({ reqPathFromCacheForBeforeMounting: message });
           break;
+        case "reqPathFromCacheForBeforeMountingShowingSelectedGeneration":
+          delete message.uuid;
+          this.setState({
+            reqPathFromCacheForBeforeMountingShowingSelectedGeneration: message,
+          });
+          break;
       }
     };
 
@@ -142,8 +144,13 @@ class OHome extends React.Component {
   }
 
   renderAllPods() {
-    const { lstPods, ws, reqPathFromCache, reqPathFromCacheForBeforeMounting } =
-      this.state;
+    const {
+      lstPods,
+      ws,
+      reqPathFromCache,
+      reqPathFromCacheForBeforeMounting,
+      reqPathFromCacheForBeforeMountingShowingSelectedGeneration,
+    } = this.state;
     // Convert the Map to an array of [key, value] pairs
     console.log(reqPathFromCache);
     console.log(lstPods);
@@ -206,11 +213,16 @@ class OHome extends React.Component {
                     reqPathFromCacheForBeforeMounting={
                       reqPathFromCacheForBeforeMounting
                     }
+                    reqPathFromCacheForBeforeMountingShowingSelectedGeneration={
+                      reqPathFromCacheForBeforeMountingShowingSelectedGeneration
+                    }
+                    currentHost={currentHost}
                   />
                 }
                 btnOpenText={<PiStepsFill />}
                 btnSize={"sm"}
                 placement={"top"}
+                size="full"
               />
             )}
           </CardFooter>
