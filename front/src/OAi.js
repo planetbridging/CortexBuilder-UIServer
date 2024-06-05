@@ -23,10 +23,14 @@ import {
   GridItem,
   VStack,
   StackDivider,
+  InputRightElement,
 } from "@chakra-ui/react";
 import React from "react";
 import { RepeatIcon } from "@chakra-ui/icons";
 import { OFixedFileManager } from "./OFileManagers";
+import { ODrawer } from "./OTemplates";
+import ONeuralNetworkViewer from "./ONeuralNetworkViewer";
+import { OFFNN } from "./OFFNN";
 
 class OAi extends React.Component {
   state = {
@@ -35,7 +39,51 @@ class OAi extends React.Component {
     popNumber: 500,
     mountedWebModel: {},
     selectedGenerationFolder: "",
+    inputs: [],
+    outputs: {},
   };
+
+  constructor(props) {
+    super(props);
+
+    this.inputRefs = this.state.inputs.map(() => React.createRef());
+  }
+
+  componentDidUpdate(prevProps) {
+    if (this.props.mountAIModelWeb !== prevProps.mountAIModelWeb) {
+      const newInputs = this.createInitialInputs(this.props.mountAIModelWeb);
+      this.setState({
+        inputs: newInputs,
+      });
+      this.inputRefs = newInputs.map(() => React.createRef());
+    }
+  }
+
+  createInitialInputs(data) {
+    return data && data.layers && data.layers.input && data.layers.input.neurons
+      ? Object.keys(data.layers.input.neurons).map(() => '')
+      : [];
+  }
+
+  handleButtonClick = () => {
+    const inputs = this.inputRefs.map(ref => ref.current.value);
+    console.log(inputs);
+    console.log("--------running model testing-------");
+    const nn = new OFFNN(this.props.mountAIModelWeb);
+    var inputFields = {};
+
+    for(let i = 0; i < inputs.length; i++){
+      const num = i + 1;
+      inputFields[num] = inputs[i];
+    }
+    console.log(inputFields);
+    // Example input values - adjust based on your actual input configuration
+    const outputs = nn.feedforward(inputFields);
+    console.log("Network outputs:", outputs);
+    this.setState({outputs: outputs});
+    //this.setState({ inputs });
+  };
+  
 
   handleSelect = (project, pod) => {
     console.log("selected computer", pod);
@@ -119,7 +167,8 @@ class OAi extends React.Component {
   }
 
   itemGenerationActions(menuItemName, item) {
-    const { selectedProject, selectedComputer,selectedGenerationFolder } = this.state;
+    const { selectedProject, selectedComputer, selectedGenerationFolder } =
+      this.state;
     console.log(menuItemName, item);
     switch (menuItemName) {
       case "Select":
@@ -131,30 +180,47 @@ class OAi extends React.Component {
           }),
         };
         this.props.ws.send(JSON.stringify(message));
-        this.setState({selectedGenerationFolder: item.name});
+        this.setState({ selectedGenerationFolder: item.name });
         break;
-        case "Open":
-          var newuuidPath = selectedComputer.replace("12345", "4123");
-          var tmpNewPath = selectedProject.replace("/path", "");
-          var fullPath =
-            "http://" +
-            this.props.currentHost +
-            ":4124/files/" +
-            newuuidPath +
-            tmpNewPath +
-            "/" + selectedGenerationFolder+ "/"+
-            item.name;
-            //console.log(fullPath);
-          //console.log(fullPath);
-          window.open(fullPath, "_blank");
+      case "Open":
+        var newuuidPath = selectedComputer.replace("12345", "4123");
+        var tmpNewPath = selectedProject.replace("/path", "");
+        var fullPath =
+          "http://" +
+          this.props.currentHost +
+          ":4124/files/" +
+          newuuidPath +
+          tmpNewPath +
+          "/" +
+          selectedGenerationFolder +
+          "/" +
+          item.name;
+        //console.log(fullPath);
+        //console.log(fullPath);
+        window.open(fullPath, "_blank");
+        break;
+      case ("Open", "Mount Web (Here)"):
+        var newuuidPath = selectedComputer.replace("12345", "4123");
+        var tmpNewPath = selectedProject.replace("/path", "");
+        var fullPath =
+          "http://" +
+          this.props.currentHost +
+          ":4124/files/" +
+          newuuidPath +
+          tmpNewPath +
+          "/" +
+          selectedGenerationFolder +
+          "/" +
+          item.name;
+        this.props.getRequest(fullPath, "getAiModel");
         break;
     }
 
-    
+    //getRequest
   }
 
   render() {
-    const { selectedComputer, selectedProject } = this.state;
+    const { selectedComputer, selectedProject,outputs } = this.state;
     //console.log(this.props.podConfig, this.props.podConfig?.setProjectPath);
     return (
       <Box h="100%">
@@ -197,13 +263,64 @@ class OAi extends React.Component {
             <Box bg="teal.400" boxShadow="lg" p="1" borderRadius="md">
               <Stack>
                 <Text size="xs">Mounted Model Web</Text>
-                <Input
-                  size="xs"
-                  variant="filled"
-                  placeholder="Selected Path"
-                  value={selectedComputer ? "unkown" : ""}
-                  isReadOnly
-                />
+                <InputGroup size="xs">
+                  <Input
+                    variant="filled"
+                    placeholder="Selected Path"
+                    value={
+                      this.props.mountAIModelWeb
+                        ? "Layers: " +
+                          this.props.mountAIModelWeb.layers.hidden.length
+                        : ""
+                    }
+                    isReadOnly
+                  />
+                  <InputRightElement width="4.5rem">
+                    {this.props.mountAIModelWeb ? (
+                      <ODrawer
+                        btnOpenText="Open"
+                        btnSize="xs"
+                        header="AI Model Mounted Web"
+                        size="full"
+                        content={
+                          <Tabs isFitted variant="enclosed">
+                            <TabList mb="1em">
+                              <Tab>Input testing</Tab>
+                              <Tab>Diagram</Tab>
+                            </TabList>
+                            <TabPanels>
+                              <TabPanel>
+                              <div>
+        {this.state.inputs.map((_, index) => (
+          <Input
+            key={index}
+            placeholder={`Input ${index + 1}`}
+            ref={this.inputRefs[index]}
+          />
+        ))}
+        <Button onClick={this.handleButtonClick}>Run Model</Button>
+      </div>
+
+      {Object.keys(outputs).map((key) => (
+        <Text key={key}>
+          Key: {key}, Value: {outputs[key]}
+        </Text>
+      ))}
+                              </TabPanel>
+                              <TabPanel h="100%" w="100%">
+                                <ONeuralNetworkViewer
+                                  network={this.props.mountAIModelWeb}
+                                />
+                              </TabPanel>
+                            </TabPanels>
+                          </Tabs>
+                        }
+                      />
+                    ) : (
+                      ""
+                    )}
+                  </InputRightElement>
+                </InputGroup>
               </Stack>
             </Box>
           </Flex>
@@ -263,7 +380,7 @@ class OAi extends React.Component {
                           .contents
                       }
                       itemActions={this.itemGenerationActions.bind(this)}
-                      menuItems={["Open","Mount Web (Here)", "Mount Server"]}
+                      menuItems={["Open", "Mount Web (Here)", "Mount Server"]}
                     />
                   </Box>
                 </VStack>

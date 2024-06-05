@@ -46,6 +46,7 @@ class OHome extends React.Component {
     reqPathFromCache: {},
     reqPathFromCacheForBeforeMounting: {},
     reqPathFromCacheForBeforeMountingShowingSelectedGeneration: {},
+    mountAIModelWeb: null,
     lstDataPods: [],
     lstAiPods: [],
     lstPodSpecs: new Map(),
@@ -116,6 +117,16 @@ class OHome extends React.Component {
     this.setState({ ws: ws });
   }
 
+  async getRequest(link,item){
+    switch(item){
+      case "getAiModel":
+      var getAiModel = await axios.get(link);
+      console.log(getAiModel.data);
+      this.setState({mountAIModelWeb: getAiModel.data});
+      break
+    }
+  }
+
   async refreshADataPodConfig(uuid) {
     const { lstDataPodConfigs } = this.state;
     console.log(uuid);
@@ -150,6 +161,7 @@ class OHome extends React.Component {
       reqPathFromCache,
       reqPathFromCacheForBeforeMounting,
       reqPathFromCacheForBeforeMountingShowingSelectedGeneration,
+      mountAIModelWeb
     } = this.state;
     // Convert the Map to an array of [key, value] pairs
     console.log(reqPathFromCache);
@@ -217,6 +229,8 @@ class OHome extends React.Component {
                       reqPathFromCacheForBeforeMountingShowingSelectedGeneration
                     }
                     currentHost={currentHost}
+                    getRequest={this.getRequest.bind(this)}
+                    mountAIModelWeb={mountAIModelWeb}
                   />
                 }
                 btnOpenText={<PiStepsFill />}
