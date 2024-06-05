@@ -45,7 +45,6 @@ export class OFileManager extends React.Component {
       path: "Home > Documents",
       items: [],
       txtFolderName: "",
-     
     };
   }
 
@@ -128,6 +127,34 @@ export class OFileManager extends React.Component {
         itemName;
       //console.log(fullPath);
       window.open(fullPath, "_blank");
+    }
+  }
+
+  mountData(itemName, itemType) {
+    if (itemType == "file") {
+      var newuuidPath = this.props.uuid.replace("12345", "4123");
+      var tmpNewPath = this.props.podPath.replace("/path", "./host");
+      var fullPath =
+        "http://" +
+        this.props.currentHost +
+        ":4124/files/" +
+        newuuidPath +
+        tmpNewPath +
+        "/" +
+        itemName;
+      console.log(fullPath);
+      var dataToMount = {
+        ip: this.props.uuid,
+        path: tmpNewPath + "/" + itemName,
+      };
+      if (itemName.endsWith(".csv")) {
+        console.table(dataToMount);
+        const message = {
+          type: "mountData",
+          data: JSON.stringify(dataToMount),
+        };
+        this.props.ws.send(JSON.stringify(message));
+      }
     }
   }
 
@@ -224,6 +251,11 @@ export class OFileManager extends React.Component {
                           >
                             Set as main project
                           </MenuItem>
+                          <MenuItem
+                            onClick={() => this.mountData(item.name, item.type)}
+                          >
+                            Mount Data
+                          </MenuItem>
                         </MenuList>
                       </Menu>
                     </WrapItem>
@@ -241,21 +273,20 @@ export class OFileManager extends React.Component {
 }
 
 export class OFixedFileManager extends React.Component {
+  truncateFilename(filename, maxLength) {
+    if (filename.length <= maxLength) {
+      return filename;
+    }
 
-    truncateFilename(filename, maxLength) {
-        if (filename.length <= maxLength) {
-          return filename;
-        }
-      
-        const extension = filename.split('.').pop();
-        const name = filename.replace(`.${extension}`, '');
-        const truncatedName = name.substr(0, maxLength / 2 - 1);
-        
-        return `${truncatedName}...${extension}`;
-      }
+    const extension = filename.split(".").pop();
+    const name = filename.replace(`.${extension}`, "");
+    const truncatedName = name.substr(0, maxLength / 2 - 1);
+
+    return `${truncatedName}...${extension}`;
+  }
   render() {
     return (
-        <Box h="100%" overflowY="auto">
+      <Box h="100%" overflowY="auto">
         <Wrap gap={2}>
           {this.props.contents ? (
             <>
@@ -286,7 +317,9 @@ export class OFixedFileManager extends React.Component {
                         {this.props.menuItems.map((menuItemName, index) => (
                           <MenuItem
                             key={index}
-                            onClick={() => this.props.itemActions(menuItemName,item)}
+                            onClick={() =>
+                              this.props.itemActions(menuItemName, item)
+                            }
                           >
                             {menuItemName}
                           </MenuItem>
@@ -302,7 +335,6 @@ export class OFixedFileManager extends React.Component {
           )}
         </Wrap>
       </Box>
-      
     );
   }
 }

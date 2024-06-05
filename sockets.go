@@ -45,15 +45,15 @@ type DataPodConfig struct {
 }
 
 type InitializationPopulation struct {
-	Path string `json:"path"`
-	Ip string `json:"ip"`
-	Amount int `json:"amount"`
-	AiPod string `json:aiPod`
+	Path   string `json:"path"`
+	Ip     string `json:"ip"`
+	Amount int    `json:"amount"`
+	AiPod  string `json:aiPod`
 }
 
 var (
 	clients   = make(map[*websocket.Conn]string) // stores all active clients
-	clientsMu sync.Mutex                       // ensures that updates to the clients map are thread-safe
+	clientsMu sync.Mutex                         // ensures that updates to the clients map are thread-safe
 )
 
 func handleWebsocketConnection(c *websocket.Conn) {
@@ -155,14 +155,14 @@ func handleWebsocketConnection(c *websocket.Conn) {
 				log.Println("write:", err)
 				break
 			}*/
-			processPathRequestMessage(msg, c, "reqPathFromCache",messageType)
+			processPathRequestMessage(msg, c, "reqPathFromCache", messageType)
 
 			break
 		case "reqPathFromCacheForBeforeMounting":
-			processPathRequestMessage(msg, c, "reqPathFromCacheForBeforeMounting",messageType)
+			processPathRequestMessage(msg, c, "reqPathFromCacheForBeforeMounting", messageType)
 			break
 		case "reqPathFromCacheForBeforeMountingShowingSelectedGeneration":
-			processPathRequestMessage(msg, c, "reqPathFromCacheForBeforeMountingShowingSelectedGeneration",messageType)
+			processPathRequestMessage(msg, c, "reqPathFromCacheForBeforeMountingShowingSelectedGeneration", messageType)
 			break
 		case "setCurrentProjectPath":
 
@@ -235,18 +235,41 @@ func handleWebsocketConnection(c *websocket.Conn) {
 			fmt.Println(data)
 
 			dataAi := map[string]interface{}{
-				"clientID": clientID,
-				"path": data.Path,
-				"amount": data.Amount,
+				"clientID":  clientID,
+				"path":      data.Path,
+				"amount":    data.Amount,
 				"dataCache": data.Ip,
-				"type": "initializationPopulation",
+				"type":      "initializationPopulation",
 			}
-			clientManager.SendJSONData(data.AiPod, dataAi) 
+			clientManager.SendJSONData(data.AiPod, dataAi)
 			/*message := sendJSONDataToClient(clientID, dataAi)
 			fmt.Println(message)*/
 
-			
-			
+			break
+
+		case "mountData":
+			/*type InitializationPopulation struct {
+				Path string `json:"path"`
+				Ip string `json:"ip"`
+				Amount int `json:"amount"`
+			}*/
+			var data InitializationPopulation
+			err := json.Unmarshal([]byte(msg.Data), &data)
+			if err != nil {
+				log.Println("json unmarshal data:", err)
+				break
+			}
+			fmt.Println(data)
+
+			dataToMount := map[string]interface{}{
+				"clientID": clientID,
+				"path":     data.Path,
+				"type":     "mountData",
+			}
+			clientManager.SendJSONData(data.Ip, dataToMount)
+			/*message := sendJSONDataToClient(clientID, dataAi)
+			fmt.Println(message)*/
+
 			break
 		default:
 			log.Println("unknown message type:", msg.Type)
@@ -333,7 +356,6 @@ func sendClientsInfoManually(c *websocket.Conn) {
 		log.Println("write:", err)
 	}
 }
-
 
 func sendJSONDataToClient(clientID string, data interface{}) string {
 	clientsMu.Lock()

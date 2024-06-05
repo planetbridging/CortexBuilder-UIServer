@@ -18,6 +18,7 @@ import {
   AccordionPanel,
   AccordionIcon,
   ButtonGroup,
+  Stack,
 } from "@chakra-ui/react";
 import React from "react";
 import { FaComputer } from "react-icons/fa6";
@@ -108,6 +109,16 @@ class OHome extends React.Component {
             reqPathFromCacheForBeforeMountingShowingSelectedGeneration: message,
           });
           break;
+        case "singleClientUpdate":
+          console.log(message.singleClient);
+          // Assuming 'key' is the key you want to update and 'value' is the new value
+          this.setState((prevState) => {
+            const updatedLstPods = new Map(prevState.lstPods);
+            updatedLstPods.set(message.singleClient.ip, message.singleClient);
+            return { lstPods: updatedLstPods };
+          });
+
+          break;
       }
     };
 
@@ -117,13 +128,13 @@ class OHome extends React.Component {
     this.setState({ ws: ws });
   }
 
-  async getRequest(link,item){
-    switch(item){
+  async getRequest(link, item) {
+    switch (item) {
       case "getAiModel":
-      var getAiModel = await axios.get(link);
-      console.log(getAiModel.data);
-      this.setState({mountAIModelWeb: getAiModel.data});
-      break
+        var getAiModel = await axios.get(link);
+        console.log(getAiModel.data);
+        this.setState({ mountAIModelWeb: getAiModel.data });
+        break;
     }
   }
 
@@ -161,7 +172,7 @@ class OHome extends React.Component {
       reqPathFromCache,
       reqPathFromCacheForBeforeMounting,
       reqPathFromCacheForBeforeMountingShowingSelectedGeneration,
-      mountAIModelWeb
+      mountAIModelWeb,
     } = this.state;
     // Convert the Map to an array of [key, value] pairs
     console.log(reqPathFromCache);
@@ -190,7 +201,10 @@ class OHome extends React.Component {
           </CardHeader>
           <CardBody>
             {item.computerType == "data" ? (
-              <Text>{item.config.setProjectPath}</Text>
+              <Stack>
+                <Text>Project: {item.config.setProjectPath}</Text>
+                <Text>Data: {item.mountedData}</Text>
+              </Stack>
             ) : (
               <p>ai</p>
             )}

@@ -11,12 +11,13 @@ import (
 )
 
 type ServerInfo struct {
-	OS           string `json:"os"`
-	RAM          string `json:"ram"`
-	CPU          string `json:"cpu"`
-	ComputerType string `json:"computerType"`
-	IP           string `json:"ip"`
+	OS           string      `json:"os"`
+	RAM          string      `json:"ram"`
+	CPU          string      `json:"cpu"`
+	ComputerType string      `json:"computerType"`
+	IP           string      `json:"ip"`
 	Config       interface{} `json:"config"`
+	MountedData  string      `json:"mountedData"`
 }
 
 type Client struct {
@@ -115,46 +116,90 @@ func (cm *ClientManager) handleConnection(client *Client) {
 		message := string(buf[:n])
 		fmt.Printf("Received data from %s: %s\n", client.Addr, message)
 
-		var info ServerInfo
-		err = json.Unmarshal(buf[:n], &info)
-		if err != nil {
-			fmt.Printf("Error unmarshaling JSON: %v\n", err)
-			continue
-		}
-		
-		// Update client's IP and Port
-		info.IP =  client.Addr
-
-		client.Info = info
-		//fmt.Printf("Updated client info: %s -> %+v\n", client.Addr, client.Info)
-		/*fmt.Println(client.Info)
-		jData, _ := json.Marshal(client)
-		fmt.Println(string(jData))
-
-		jsonData, err := clientManager.GetConnectedServersInfo()
-		if err != nil {
-			fmt.Printf("Error getting connected servers info: %v\n", err)
+		var js map[string]interface{}
+		errCheckJson := json.Unmarshal([]byte(message), &js)
+		//fmt.Println(js)
+		if errCheckJson != nil {
+			fmt.Println("--------------?")
 		} else {
-			fmt.Printf("Connected servers info: %s\n", jsonData)
-		}*/
-		//fmt.Println("-----------------",info.ComputerType)
-		switch info.ComputerType {
-			case "data":
-				getConfigLocation := strings.ReplaceAll(client.Addr, "12345", "4123")
-				getConfig, err := sendGetRequest("http://" + getConfigLocation + "/files/config.json")
-				if err != nil {
-					fmt.Printf("Error fetching config: %v\n", err)
-				} else {
-					var configData interface{}
-					err := json.Unmarshal([]byte(getConfig), &configData)
+			if jsType, ok := js["type"].(string); ok {
+				fmt.Println("----------------------", jsType)
+				switch jsType {
+				case "serverInfo":
+					var info ServerInfo
+					err = json.Unmarshal(buf[:n], &info)
 					if err != nil {
-						configData = getConfig // If unmarshaling fails, store as string
+						fmt.Printf("Error unmarshaling JSON: %v\n", err)
+						continue
+					} else {
+						fmt.Println("Setting up info")
+						// Update client's IP and Port
+						info.IP = client.Addr
+
+						client.Info = info
+						//fmt.Printf("Updated client info: %s -> %+v\n", client.Addr, client.Info)
+						/*fmt.Println(client.Info)
+						jData, _ := json.Marshal(client)
+						fmt.Println(string(jData))
+
+						jsonData, err := clientManager.GetConnectedServersInfo()
+						if err != nil {
+							fmt.Printf("Error getting connected servers info: %v\n", err)
+						} else {
+							fmt.Printf("Connected servers info: %s\n", jsonData)
+						}*/
+						//fmt.Println("-----------------",info.ComputerType)
+						switch info.ComputerType {
+						case "data":
+							getConfigLocation := strings.ReplaceAll(client.Addr, "12345", "4123")
+							getConfig, err := sendGetRequest("http://" + getConfigLocation + "/files/config.json")
+							if err != nil {
+								fmt.Printf("Error fetching config: %v\n", err)
+							} else {
+								var configData interface{}
+								err := json.Unmarshal([]byte(getConfig), &configData)
+								if err != nil {
+									configData = getConfig // If unmarshaling fails, store as string
+								}
+								info.Config = configData // Save the fetched config
+								//fmt.Println("Config:", configData)
+								client.Info = info
+							}
+						}
 					}
-					info.Config = configData // Save the fetched config
-					//fmt.Println("Config:", configData)
-					client.Info = info
+				case "mountStatus":
+					keys := []string{"clientID", "path", "status"}
+					if keysExist(js, keys) {
+						fmt.Println("All keys exist")
+						/*dataMountRes := map[string]interface{}{
+							"type": "testing",
+						}*/
+						client.Info.MountedData = js["path"].(string)
+						jsonData, err := json.Marshal(client.Info)
+						if err != nil {
+							fmt.Printf("Error marshaling JSON: %v\n", err)
+							return
+						}
+						postData := map[string]interface{}{
+							"msgType":      "singleClientUpdate",
+							"singleClient": json.RawMessage(jsonData),
+						}
+						message := sendJSONDataToClient(js["clientID"].(string), postData)
+
+						fmt.Println(message)
+					} else {
+						fmt.Println("Not all keys exist")
+					}
+
+				default:
+					fmt.Println("Unknown type: ", js)
 				}
+			} else {
+				fmt.Println("-------no type?")
+			}
+
 		}
+
 	}
 }
 
@@ -231,7 +276,6 @@ func (cm *ClientManager) RenewAllConfigs() {
 		}
 	}
 }
-
 
 func (cm *ClientManager) SendJSONData(addr string, data interface{}) string {
 	client, ok := cm.Clients[addr]
