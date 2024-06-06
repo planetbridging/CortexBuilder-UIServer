@@ -35,6 +35,7 @@ import logo from "./imgs/logo.jpg";
 import bg from "./imgs/bg.jpg";
 import OAi from "./OAi";
 import { changeKey } from "./jsonHelper";
+import OData from "./OData";
 
 var currentHost = window.location.hostname;
 
@@ -203,7 +204,22 @@ class OHome extends React.Component {
             {item.computerType == "data" ? (
               <Stack>
                 <Text>Project: {item.config.setProjectPath}</Text>
-                <Text>Data: {item.mountedData}</Text>
+                <Text>
+                  <ODrawer
+                    size={"full"}
+                    btnOpenText="Data: "
+                    header={"Data - " + item.mountedData}
+                    content={
+                      <OData
+                        dataPath={item.mountedData}
+                        dataSpecs={item.mountedDetails}
+                        dataIp={item.ip}
+                        currentHost={currentHost}
+                      />
+                    }
+                  />
+                  {item.mountedData}
+                </Text>
               </Stack>
             ) : (
               <p>ai</p>

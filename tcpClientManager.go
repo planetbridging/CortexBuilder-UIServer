@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net"
 	"os"
 	"strings"
@@ -11,13 +12,14 @@ import (
 )
 
 type ServerInfo struct {
-	OS           string      `json:"os"`
-	RAM          string      `json:"ram"`
-	CPU          string      `json:"cpu"`
-	ComputerType string      `json:"computerType"`
-	IP           string      `json:"ip"`
-	Config       interface{} `json:"config"`
-	MountedData  string      `json:"mountedData"`
+	OS             string      `json:"os"`
+	RAM            string      `json:"ram"`
+	CPU            string      `json:"cpu"`
+	ComputerType   string      `json:"computerType"`
+	IP             string      `json:"ip"`
+	Config         interface{} `json:"config"`
+	MountedData    string      `json:"mountedData"`
+	MountedDetails interface{} `json:"mountedDetails"`
 }
 
 type Client struct {
@@ -175,6 +177,21 @@ func (cm *ClientManager) handleConnection(client *Client) {
 							"type": "testing",
 						}*/
 						client.Info.MountedData = js["path"].(string)
+
+						getMountedInfo := strings.ReplaceAll(client.Addr, "12345", "4123")
+						getMountInfoStr, err := sendGetRequest("http://" + getMountedInfo + "/mounted")
+						if err != nil {
+							log.Println("Failed to send GET request:", err)
+						} else {
+							var getMountInfoJson []interface{}
+							err = json.Unmarshal([]byte(getMountInfoStr), &getMountInfoJson)
+							if err != nil {
+								log.Println("Failed to convert response to JSON:", err)
+							} else {
+								client.Info.MountedDetails = getMountInfoJson
+							}
+						}
+
 						jsonData, err := json.Marshal(client.Info)
 						if err != nil {
 							fmt.Printf("Error marshaling JSON: %v\n", err)
