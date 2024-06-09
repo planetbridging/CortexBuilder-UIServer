@@ -41,6 +41,7 @@ class OAi extends React.Component {
     selectedGenerationFolder: "",
     inputs: [],
     outputs: {},
+    selectedDataPath: "",
   };
 
   constructor(props) {
@@ -61,18 +62,18 @@ class OAi extends React.Component {
 
   createInitialInputs(data) {
     return data && data.layers && data.layers.input && data.layers.input.neurons
-      ? Object.keys(data.layers.input.neurons).map(() => '')
+      ? Object.keys(data.layers.input.neurons).map(() => "")
       : [];
   }
 
   handleButtonClick = () => {
-    const inputs = this.inputRefs.map(ref => ref.current.value);
+    const inputs = this.inputRefs.map((ref) => ref.current.value);
     console.log(inputs);
     console.log("--------running model testing-------");
     const nn = new OFFNN(this.props.mountAIModelWeb);
     var inputFields = {};
 
-    for(let i = 0; i < inputs.length; i++){
+    for (let i = 0; i < inputs.length; i++) {
       const num = i + 1;
       inputFields[num] = inputs[i];
     }
@@ -80,15 +81,18 @@ class OAi extends React.Component {
     // Example input values - adjust based on your actual input configuration
     const outputs = nn.feedforward(inputFields);
     console.log("Network outputs:", outputs);
-    this.setState({outputs: outputs});
+    this.setState({ outputs: outputs });
     //this.setState({ inputs });
   };
-  
 
   handleSelect = (project, pod) => {
     console.log("selected computer", pod);
     this.refreshPath(project, pod.ip);
-    this.setState({ selectedProject: project, selectedComputer: pod.ip });
+    this.setState({
+      selectedProject: project,
+      selectedComputer: pod.ip,
+      selectedDataPath: pod.mountedData,
+    });
   };
 
   showCurrentProjects() {
@@ -120,6 +124,7 @@ class OAi extends React.Component {
               >
                 {pod.ip}
                 <Box mt="10px">Project Path: {pod.config.setProjectPath}</Box>
+                <Box mt="10px">Project Data: {pod.mountedData}</Box>
               </Box>
             </WrapItem>
           ))}
@@ -220,7 +225,8 @@ class OAi extends React.Component {
   }
 
   render() {
-    const { selectedComputer, selectedProject,outputs } = this.state;
+    const { selectedComputer, selectedProject, selectedDataPath, outputs } =
+      this.state;
     //console.log(this.props.podConfig, this.props.podConfig?.setProjectPath);
     return (
       <Box h="100%">
@@ -247,6 +253,25 @@ class OAi extends React.Component {
               </Stack>
             </Box>
             <Spacer />
+
+            <Box bg="teal.400" boxShadow="lg" p="1" borderRadius="md">
+              <Stack>
+                <Text size="xs">Selected Data Path</Text>
+                <Input
+                  size="xs"
+                  variant="filled"
+                  placeholder="Selected Path"
+                  value={
+                    selectedComputer
+                      ? selectedComputer + " - " + selectedDataPath
+                      : ""
+                  }
+                  isReadOnly
+                />
+              </Stack>
+            </Box>
+            <Spacer />
+
             <Box bg="teal.400" boxShadow="lg" p="1" borderRadius="md">
               <Stack>
                 <Text size="xs">Mounted Models Server</Text>
@@ -290,22 +315,24 @@ class OAi extends React.Component {
                             </TabList>
                             <TabPanels>
                               <TabPanel>
-                              <div>
-        {this.state.inputs.map((_, index) => (
-          <Input
-            key={index}
-            placeholder={`Input ${index + 1}`}
-            ref={this.inputRefs[index]}
-          />
-        ))}
-        <Button onClick={this.handleButtonClick}>Run Model</Button>
-      </div>
+                                <div>
+                                  {this.state.inputs.map((_, index) => (
+                                    <Input
+                                      key={index}
+                                      placeholder={`Input ${index + 1}`}
+                                      ref={this.inputRefs[index]}
+                                    />
+                                  ))}
+                                  <Button onClick={this.handleButtonClick}>
+                                    Run Model
+                                  </Button>
+                                </div>
 
-      {Object.keys(outputs).map((key) => (
-        <Text key={key}>
-          Key: {key}, Value: {outputs[key]}
-        </Text>
-      ))}
+                                {Object.keys(outputs).map((key) => (
+                                  <Text key={key}>
+                                    Key: {key}, Value: {outputs[key]}
+                                  </Text>
+                                ))}
                               </TabPanel>
                               <TabPanel h="100%" w="100%">
                                 <ONeuralNetworkViewer
@@ -484,45 +511,3 @@ class OAi extends React.Component {
 }
 
 export default OAi;
-
-/*<Box >
-                  <Grid
-                    templateAreas={`"header header"
-                      "nav main"
-                      "nav footer"`}
-                    gridTemplateRows={"100px 1fr 30px"}
-                    gridTemplateColumns={"150px 1fr"}
-                    h="80%"
-                    gap="1"
-                    color="blackAlpha.700"
-                    fontWeight="bold"
-                  >
-                    <GridItem pl="2" area={"header"}>
-                      {this.showCurrentProjects()}
-                    </GridItem>
-                    <GridItem pl="2" area={"nav"}>
-                      <Box h="100%" overflowY="auto">
-                        <OFixedFileManager
-                          contents={
-                            this.props.reqPathFromCacheForBeforeMounting.contents
-                          }
-                          itemActions={this.itemGenerationActions.bind(this)}
-                          menuItems={["Select","Mount"]}
-                        />
-                      </Box>
-                    </GridItem>
-                    <GridItem pl="2" bg="green.300" area={"main"} overflowY="scroll">   
-                     
-                        <OFixedFileManager
-                          contents={
-                            this.props.reqPathFromCacheForBeforeMountingShowingSelectedGeneration.contents
-                          }
-                          itemActions={this.itemGenerationActions.bind(this)}
-                          menuItems={["Mount Web (Here)","Mount Server"]}
-                        />
-                    </GridItem>
-                    <GridItem pl="2" bg="blue.300" area={"footer"}>
-                      (Will eventually show status)
-                    </GridItem>
-                  </Grid>
-                </Box>*/
