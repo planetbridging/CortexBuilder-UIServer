@@ -271,6 +271,30 @@ func handleWebsocketConnection(c *websocket.Conn) {
 			fmt.Println(message)*/
 
 			break
+		case "startEval":
+			/*type InitializationPopulation struct {
+				Path string `json:"path"`
+				Ip string `json:"ip"`
+				Amount int `json:"amount"`
+			}*/
+			var data interface{}
+			err := json.Unmarshal([]byte(msg.Data), &data)
+			if err != nil {
+				log.Println("json unmarshal data:", err)
+				return
+			}
+			fmt.Println(data)
+
+			/*dataToMount := map[string]interface{}{
+				"clientID": clientID,
+				"path":     data.Path,
+				"type":     "mountData",
+			}*/
+			//clientManager.SendJSONData(data.Ip, dataToMount)
+			/*message := sendJSONDataToClient(clientID, dataAi)
+			fmt.Println(message)*/
+
+			break
 		default:
 			log.Println("unknown message type:", msg.Type)
 			log.Println(msg)

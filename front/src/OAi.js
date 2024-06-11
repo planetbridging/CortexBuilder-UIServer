@@ -31,6 +31,7 @@ import { OFixedFileManager } from "./OFileManagers";
 import { ODrawer } from "./OTemplates";
 import ONeuralNetworkViewer from "./ONeuralNetworkViewer";
 import { OFFNN } from "./OFFNN";
+import OEval from "./OEval";
 
 class OAi extends React.Component {
   state = {
@@ -449,7 +450,12 @@ class OAi extends React.Component {
                   <AccordionItem>
                     <AccordionButton>Fitness Evaluation</AccordionButton>
                     <AccordionPanel>
-                      {/* Fitness Evaluation settings go here */}
+                      <OEval
+                        ws={this.props.ws}
+                        selectedComputer={selectedComputer}
+                        selectedDataPath={selectedDataPath}
+                        selectedProject={selectedProject}
+                      />
                     </AccordionPanel>
                   </AccordionItem>
                   <AccordionItem>
