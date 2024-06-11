@@ -43,8 +43,8 @@ class OEval extends React.Component {
         selectedComputer: this.props.selectedComputer.split(":")[0],
         selectedDataPath: this.props.selectedDataPath,
         selectedProject: this.props.selectedProject,
-        training: this.state.training,
-        testing: this.state.testing,
+        training: parseInt(this.state.training),
+        testing: parseInt(this.state.testing),
         aiPod: this.props.aiPod,
       };
       const message = {
