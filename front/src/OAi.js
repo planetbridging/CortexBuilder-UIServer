@@ -455,6 +455,7 @@ class OAi extends React.Component {
                         selectedComputer={selectedComputer}
                         selectedDataPath={selectedDataPath}
                         selectedProject={selectedProject}
+                        aiPod={this.props.ip}
                       />
                     </AccordionPanel>
                   </AccordionItem>

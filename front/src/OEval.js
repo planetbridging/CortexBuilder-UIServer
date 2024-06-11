@@ -45,6 +45,7 @@ class OEval extends React.Component {
         selectedProject: this.props.selectedProject,
         training: this.state.training,
         testing: this.state.testing,
+        aiPod: this.props.aiPod,
       };
       const message = {
         type: "startEval",

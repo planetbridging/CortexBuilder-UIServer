@@ -277,13 +277,24 @@ func handleWebsocketConnection(c *websocket.Conn) {
 				Ip string `json:"ip"`
 				Amount int `json:"amount"`
 			}*/
-			var data interface{}
+
+			var data map[string]interface{}
 			err := json.Unmarshal([]byte(msg.Data), &data)
 			if err != nil {
 				log.Println("json unmarshal data:", err)
 				return
 			}
 			fmt.Println(data)
+			fmt.Println(data["aiPod"])
+			AiPod, ok := data["aiPod"].(string)
+			if !ok {
+				log.Println("aiPod is not a string")
+			} else {
+				data["type"] = "startEval"
+				data["clientID"] = clientID
+
+				clientManager.SendJSONData(AiPod, data)
+			}
 
 			/*dataToMount := map[string]interface{}{
 				"clientID": clientID,
