@@ -207,7 +207,19 @@ func (cm *ClientManager) handleConnection(client *Client) {
 					} else {
 						fmt.Println("Not all keys exist")
 					}
+				case "evalStatusUpdate":
+					//fmt.Println("evalStatusUpdate:", js)
+					js["pod"] = client.Addr
+					jsBytes, err := json.Marshal(js)
+					if err != nil {
+						fmt.Println("Error marshalling JSON:", err)
 
+					} else {
+						jsString := string(jsBytes)
+						sendAllRelay(jsString)
+					}
+
+					break
 				default:
 					fmt.Println("Unknown type: ", js)
 				}

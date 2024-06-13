@@ -2,6 +2,7 @@ import React from "react";
 import {
   Box,
   Button,
+  ButtonGroup,
   Flex,
   FormControl,
   FormLabel,
@@ -84,9 +85,18 @@ class OEval extends React.Component {
             <InputRightAddon>Testing</InputRightAddon>
           </InputGroup>
         </HStack>
-        <Button mt={4} colorScheme="teal" onClick={this.handleStartEval}>
-          Start Evaluation
-        </Button>
+        <HStack>
+          <Text>
+            {this.props.evalStatus
+              ? this.props.evalStatus.current +
+                "/" +
+                this.props.evalStatus.total
+              : "No Status"}
+          </Text>
+          <Button mt={4} colorScheme="teal" onClick={this.handleStartEval}>
+            Start Evaluation
+          </Button>
+        </HStack>
       </Box>
     );
   }

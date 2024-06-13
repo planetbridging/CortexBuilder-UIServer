@@ -284,8 +284,8 @@ func handleWebsocketConnection(c *websocket.Conn) {
 				log.Println("json unmarshal data:", err)
 				return
 			}
-			fmt.Println(data)
-			fmt.Println(data["aiPod"])
+			//fmt.Println(data)
+			//fmt.Println(data["aiPod"])
 			AiPod, ok := data["aiPod"].(string)
 			if !ok {
 				log.Println("aiPod is not a string")
@@ -306,6 +306,7 @@ func handleWebsocketConnection(c *websocket.Conn) {
 			fmt.Println(message)*/
 
 			break
+
 		default:
 			log.Println("unknown message type:", msg.Type)
 			log.Println(msg)

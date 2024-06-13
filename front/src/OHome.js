@@ -55,6 +55,7 @@ class OHome extends React.Component {
     lstPodSpecsAi: new Map(),
     lstPodPath: new Map(),
     lstDataPodConfigs: new Map(),
+    lstAiPodStatusUpdate: new Map(),
   };
 
   constructor(props) {
@@ -120,6 +121,15 @@ class OHome extends React.Component {
           });
 
           break;
+        case "evalStatusUpdate":
+          //lstAiPodStatusUpdate
+
+          this.setState((prevState) => {
+            const updatedMap = new Map(prevState.lstAiPodStatusUpdate);
+            updatedMap.set(message.pod, message);
+            return { lstAiPodStatusUpdate: updatedMap };
+          });
+          break;
       }
     };
 
@@ -174,6 +184,7 @@ class OHome extends React.Component {
       reqPathFromCacheForBeforeMounting,
       reqPathFromCacheForBeforeMountingShowingSelectedGeneration,
       mountAIModelWeb,
+      lstAiPodStatusUpdate,
     } = this.state;
     // Convert the Map to an array of [key, value] pairs
     console.log(reqPathFromCache);
@@ -222,7 +233,14 @@ class OHome extends React.Component {
                 </Text>
               </Stack>
             ) : (
-              <p>ai</p>
+              this.state.lstAiPodStatusUpdate.has(item.ip) && (
+                <p>
+                  Eval:{" "}
+                  {this.state.lstAiPodStatusUpdate.get(item.ip).current +
+                    "/" +
+                    this.state.lstAiPodStatusUpdate.get(item.ip).total}
+                </p>
+              )
             )}
           </CardBody>
           <CardFooter>
@@ -261,6 +279,7 @@ class OHome extends React.Component {
                     currentHost={currentHost}
                     getRequest={this.getRequest.bind(this)}
                     mountAIModelWeb={mountAIModelWeb}
+                    evalStatus={this.state.lstAiPodStatusUpdate.get(item.ip)}
                   />
                 }
                 btnOpenText={<PiStepsFill />}
